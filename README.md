@@ -1,53 +1,105 @@
-# @metamask/template-snap-monorepo
+# MetaMask Snap DCA Skills
 
-This repository demonstrates how to develop a snap with TypeScript. For detailed
-instructions, see [the MetaMask documentation](https://docs.metamask.io/guide/snaps.html#serving-a-snap-to-your-local-environment).
+This project is a MetaMask Snap that adds a skill-based wallet experience for automated investing strategies.
 
-MetaMask Snaps is a system that allows anyone to safely expand the capabilities
-of MetaMask. A _snap_ is a program that we run in an isolated environment that
-can customize the wallet experience.
+The main idea is simple:
 
-## Snaps is pre-release software
+- Users open a wallet flow like `DCA BTC`, `DCA ETH`, or other assets.
+- They choose a schedule such as `1 week`, `1 month`, or another interval.
+- An AI layer reasons about the strategy and helps determine the best execution timing.
+- The snap coordinates the user experience and passes the chosen skill to the smart account flow.
 
-To interact with (your) Snaps, you will need to install [MetaMask Flask](https://metamask.io/flask/),
-a canary distribution for developers that provides access to upcoming features.
+This is meant to evolve into a MetaMask-native skill marketplace where users can install automated strategies such as:
+
+- Dollar-cost averaging for BTC, ETH, and other tokens
+- Voting or governance automation such as veAERO voting
+- Other on-chain actions that can run with explicit, auditable, and revocable permissions
+
+The backend is intended to be built with NestJS and expose the services needed to manage skills, strategy metadata, and permissioned execution.
+
+## What This Project Does
+
+- Provides a MetaMask Snap UI for strategy selection
+- Lets users configure DCA frequency and asset choice
+- Supports multiple assets, not just BTC
+- Uses AI reasoning to help decide when to buy based on the selected skill
+- Prepares the foundation for a marketplace of wallet skills
+
+## Example User Flow
+
+1. User opens the snap in MetaMask.
+2. User selects a skill like `DCA BTC` or `DCA ETH`.
+3. User chooses a cadence such as `1 week` or `1 month`.
+4. The AI layer evaluates the strategy and suggests an execution plan.
+5. The smart account executes the action under user-approved permissions.
+
+## Project Structure
+
+- `packages/snap`: MetaMask Snap implementation
+- `packages/site`: Front-end for interacting with the snap
 
 ## Getting Started
 
-Clone the template-snap repository [using this template](https://github.com/MetaMask/template-snap-monorepo/generate)
-and set up the development environment:
+### Requirements
+
+- Node.js `>=18.6.0`
+- Yarn `3.2.1`
+- MetaMask Flask for local Snap development
+
+### Install Dependencies
 
 ```shell
-yarn install && yarn start
+yarn install
 ```
 
-## Cloning
+### Run the Project Locally
 
-This repository contains GitHub Actions that you may find useful, see
-`.github/workflows` and [Releasing & Publishing](https://github.com/MetaMask/template-snap-monorepo/edit/main/README.md#releasing--publishing)
-below for more information.
+Start the snap and the front-end together:
 
-If you clone or create this repository outside the MetaMask GitHub organization,
-you probably want to run `./scripts/cleanup.sh` to remove some files that will
-not work properly outside the MetaMask GitHub organization.
+```shell
+yarn start
+```
 
-If you don't wish to use any of the existing GitHub actions in this repository,
-simply delete the `.github/workflows` directory.
+If you want to run each package separately:
 
-## Contributing
+```shell
+yarn workspace snap start
+yarn workspace site start
+```
 
-### Testing and Linting
+## How to Install the MetaMask Snap
 
-Run `yarn test` to run the tests once.
+1. Install [MetaMask Flask](https://metamask.io/flask/) in your browser.
+2. Start the project locally with `yarn start`.
+3. Open the front-end at the local site URL shown in the terminal.
+4. Connect MetaMask Flask to the local site.
+5. Click the install or connect button for the snap.
+6. Approve the snap permissions in MetaMask Flask.
+7. The snap will then be available inside MetaMask for testing DCA skills.
 
-Run `yarn lint` to run the linter, or run `yarn lint:fix` to run the linter and
-fix any automatically fixable issues.
+## How to Use the Custom Wallet Flow
 
-### Using NPM packages with scripts
+1. Open the wallet UI.
+2. Choose a skill such as `DCA BTC`, `DCA ETH`, or another supported asset.
+3. Pick the cadence, such as `1 week` or `1 month`.
+4. Confirm the strategy.
+5. The AI layer can reason about the best execution timing.
+6. The smart account executes according to the approved permissions.
 
-Scripts are disabled by default for security reasons. If you need to use NPM
-packages with scripts, you can run `yarn allow-scripts auto`, and enable the
-script in the `lavamoat.allowScripts` section of `package.json`.
+## Development Notes
 
-See the documentation for [@lavamoat/allow-scripts](https://github.com/LavaMoat/LavaMoat/tree/main/packages/allow-scripts)
-for more information.
+- This repository is for building and testing the snap experience locally.
+- MetaMask Flask is typically required for snap development.
+- The long-term architecture should keep user permissions explicit, auditable, and revocable.
+
+## Roadmap
+
+- DCA skill UI for BTC, ETH, and other assets
+- Schedule selection for weekly, monthly, and custom intervals
+- AI-assisted strategy reasoning
+- NestJS backend for skill orchestration
+- Skill marketplace support for additional automated wallet behaviors
+
+## License
+
+This project inherits the license of the repository template unless changed later.
