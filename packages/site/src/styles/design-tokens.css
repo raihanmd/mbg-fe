@@ -1,0 +1,18 @@
+/* Design Tokens for DCA Marketplace */
+:root {
+  /* Primary accent – a vivid green */
+  --color-primary: #00C853; /* Material Design green A700 */
+  --color-primary-light: #69F0AE;
+  --color-primary-dark: #009624;
+
+  /* Backgrounds */
+  --color-bg: #121212; /* Dark background */
+  --color-text: #FFFFFF; /* White text */
+}
+
+/* Apply globally */
+html, body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', sans-serif;
+}

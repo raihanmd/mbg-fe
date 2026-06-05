@@ -1,13 +1,13 @@
-import React from 'react'
+import React from 'react';
+import { navigate } from 'gatsby';
 import { Card } from './Card';
-import type { SkillItem } from '../hooks/useRecommendation';
-import { Snap } from 'src/types';
+import type { SkillItem } from '../api/skills';
 
-const SkillsCard = ({ skill, installedSnap }: {skill: SkillItem, installedSnap:Snap | null}) => {
+const SkillsCard = ({ skill }: { skill: SkillItem }) => {
   return (
     <Card
-		  key={skill._id}
-		  fullWidth={true}
+      key={skill._id}
+      fullWidth={true}
       content={{
         title: skill.name,
         description: (
@@ -18,18 +18,16 @@ const SkillsCard = ({ skill, installedSnap }: {skill: SkillItem, installedSnap:S
         ),
         button: (
           <button
+            className="w-full bg-indigo-400 px-6 py-2 rounded-md mt-2 text-white font-bold hover:bg-indigo-500 transition-colors"
             type="button"
-				onClick={() => { }
-            }
-            disabled={!installedSnap}
+            onClick={() => navigate(`/skills/${skill.skillId}`)}
           >
-            Install Skill
+            Choose Skill
           </button>
         ),
       }}
-      disabled={!installedSnap}
     />
   );
-}
+};
 
 export default SkillsCard

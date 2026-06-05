@@ -1,5 +1,24 @@
-import type { OnRpcRequestHandler } from "@metamask/snaps-sdk";
-import { Box, Text, Bold } from "@metamask/snaps-sdk/jsx";
+import {
+  heading,
+  OnHomePageHandler,
+  OnUserInputHandler,
+  panel,
+  text,
+  UserInputEventType,
+  type OnRpcRequestHandler,
+} from '@metamask/snaps-sdk';
+import {
+  Box,
+  Text,
+  Bold,
+  Selector,
+  SelectorOption,
+  Card,
+  Heading,
+  Field,
+  Input,
+  Button,
+} from '@metamask/snaps-sdk/jsx';
 
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
@@ -11,94 +30,149 @@ import { Box, Text, Bold } from "@metamask/snaps-sdk/jsx";
  * @returns The result of `snap_dialog`.
  * @throws If the request method is not valid for this snap.
  */
+let temporarySelectedSkill = '';
+export const onHomePage: OnHomePageHandler = async () => {
+  return {
+    content: (
+      <Box>
+        <Heading>AI Investment Copilot 🤖</Heading>
+        <Text>Silakan pilih strategi DCA bertenaga AI kamu:</Text>
+
+        {/* Selector ini akan langsung tampil di dalam MetaMask */}
+        <Selector name="skill-selector" title="Pilih Strategi">
+          <SelectorOption value="dca-reasoning-btc">
+            <Card
+              title="BTC Smart Timing (AI)"
+              value="DCA otomatis dengan analisa sentimen pasar via x402 Bazaar."
+            />
+          </SelectorOption>
+          <SelectorOption value="dca-standard-eth">
+            <Card
+              title="Standard ETH DCA"
+              value="Membeli ETH berkala secara kaku setiap minggu tanpa AI."
+            />
+          </SelectorOption>
+        </Selector>
+        <Field label="Nominal Investasi (USDC)">
+          <Input
+            name="dca-amount-input"
+            placeholder="Masukkan jumlah, contoh: 10"
+            type="number"
+          />
+        </Field>
+        <Button name="submit-dca" variant="primary">
+          Submit
+        </Button>
+      </Box>
+    ),
+  };
+};
+export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
+  // Kita hanya perlu mendengarkan ketika tombol "submit-dca" diklik
+  if (event.name === 'submit-dca') {
+    // 1. Ambil nilai nominal dari Input
+    const inputAmount = event.context?.['dca-amount-input'] || '0';
+
+    // 2. Ambil nilai strategi dari Selector (MetaMask menyimpannya di dalam context sesuai nama Selector-nya)
+    const selectedSkillId =
+      event.context?.['skill-selector'] || 'Belum memilih';
+
+    // 3. Update UI menjadi Loading/Memproses
+    await snap.request({
+      method: 'snap_updateInterface',
+      params: {
+        id,
+        ui: (
+          <Box>
+            <Heading>Memproses Data... ⏳</Heading>
+            <Text>Strategi: **{selectedSkillId}**</Text>
+            <Text>Nominal: **{inputAmount} USDC**</Text>
+            <Text>
+              Sedang mendaftarkan konfigurasi ke backend NestJS kamu...
+            </Text>
+          </Box>
+        ),
+      },
+    });
+
+    // 4. DI SINI TEMPAT KAMU FETCH KE BACKEND NESTJS KAMU NANTI!
+    // try {
+    //   const response = await fetch('http://localhost:3000/installations/prepare', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({
+    //       skillId: selectedSkillId,
+    //       config: { amount: inputAmount }
+    //     })
+    //   });
+    //   const data = await response.json();
+    //
+    //   // Jika sukses, pemicu pop-up grant permission ERC-7715 di sini
+    // } catch (err) { ... }
+  }
+};
+
 export const onRpcRequest: OnRpcRequestHandler = async ({
   origin,
   request,
 }) => {
   switch (request.method) {
-    case "not_allowed_dca_btc_by_ai_notify": {
-      const { data } = request.params as {
-        data?: {
-          title?: string;
-          reason?: string;
-          confidence?: number;
-          recommendation?: string;
-        };
-      };
+    case 'hello': {
       return snap.request({
-        method: "snap_dialog",
+        method: 'snap_dialog',
         params: {
-          type: "confirmation",
+          type: 'confirmation',
           content: (
             <Box>
-              <Text>
-                <Bold>{data?.title ?? "N/A"}</Bold>
-              </Text>
-              <Text>
-                Reason: <Bold>{data?.reason ?? "N/A"}</Bold>
-              </Text>
-              <Text>
-                Confidence: <Bold>{data?.confidence?.toString() ?? "N/A"}</Bold>
-              </Text>
-              <Text>
-                Recommendation: <Bold>{data?.recommendation ?? "N/A"}</Bold>
-              </Text>
-              <Text>
-                Origin: <Bold>{origin}</Bold>
-              </Text>
+              <Text>Helo</Text>
             </Box>
           ),
         },
       });
     }
-    case "dca": {
-      const { asset, amount, schedule } = request.params as {
-        asset?: string;
-        amount?: string;
-        schedule?:
-          | { type: "weekly"; day: string }
-          | { type: "monthly"; dayOfMonth: number };
-      };
-
-      const scheduleText =
-        schedule?.type === "weekly"
-          ? `Every ${schedule.day}`
-          : schedule?.type === "monthly"
-            ? `Day ${schedule.dayOfMonth} of each month`
-            : "Unknown schedule";
-
+    case 'test': {
       return snap.request({
-        method: "snap_dialog",
+        method: 'snap_dialog',
         params: {
-          type:"confirmation",
+          type: 'prompt',
           content: (
             <Box>
-              <Text>
-                <Bold>DCA Skill Request</Bold>
-              </Text>
-              <Text>
-                Asset: <Bold>{asset ?? "N/A"}</Bold>
-              </Text>
-              <Text>
-                Amount: <Bold>{amount ?? "N/A"}</Bold>
-              </Text>
-              <Text>
-                Schedule: <Bold>{scheduleText}</Bold>
-              </Text>
-              <Text>
-                Origin: <Bold>{origin}</Bold>
-              </Text>
-              <Text>
-                This is where AI reasoning and smart account execution will be
-                connected next.
-              </Text>
+              <Heading>What is the wallet address?</Heading>
+              <Text>Please enter the wallet address to be monitored</Text>
             </Box>
           ),
+          placeholder: '0x123...',
         },
       });
     }
+
+    case 'nyoba': {
+      const interfaceId = await snap.request({
+        method: 'snap_createInterface',
+        params: {
+          ui: (
+            <Selector name="selector-example" title="Select an option">
+              <SelectorOption value="option-1">
+                <Card title="Option 1" value="First option" />
+              </SelectorOption>
+              <SelectorOption value="option-2">
+                <Card title="Option 2" value="Second option" />
+              </SelectorOption>
+            </Selector>
+          ),
+        },
+      });
+      return snap.request({
+        method: 'snap_dialog',
+        params: {
+          type: 'confirmation', // Bisa 'confirmation' atau 'alert'
+          id: interfaceId, // <--- Masukkan ID interface yang kita buat di atas
+        },
+      });
+    }
+
 
     default:
-      throw new Error("Method not found.");
+      throw new Error('Method not found.');
   }
 };

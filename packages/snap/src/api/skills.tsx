@@ -44,7 +44,7 @@ type SkillsResponse = {
 
 const API_URL = process.env.API_URL ?? 'http://localhost:4000';
 
-export const useRecommendation = async (): Promise<SkillItem[]> => {
+export const getAllSkills = async (): Promise<SkillItem[]> => {
   const response = await fetch(`${API_URL}/skills`);
 
   if (!response.ok) {
@@ -53,4 +53,16 @@ export const useRecommendation = async (): Promise<SkillItem[]> => {
 
   const data = (await response.json()) as SkillsResponse;
   return data.payload ?? [];
+};
+
+export const getSkillById = async (skillId: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/skills/${skillId}`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch skills');
+  }
+
+  const data = await response.json();
+  console.log(data);
+  return data;
 };
