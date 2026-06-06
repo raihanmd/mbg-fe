@@ -1,13 +1,13 @@
 {
   "version": "0.1.0",
-  "description": "An example Snap written in TypeScript.",
-  "proposedName": "TypeScript Example",
+  "description": "DCA Skill Wallet Allows AI to Execute DCA Strategy.",
+  "proposedName": "DCA Skill Wallet",
   "repository": {
     "type": "git",
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "4zSbcYRN/JkMGMyjOA8iqu9SugG0Ug2U6F28Iw/6KII=",
+    "shasum": "qQz8fRUNl7bFVEMXWn8GAJb/BFh2aBpKv5ZaEe0LhlQ=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -17,7 +17,7 @@
     }
   },
   "initialPermissions": {
-    "snap_dialog": {},
+    "endowment:network-access": {},
     "endowment:page-home": {},
     "endowment:rpc": {
       "dapps": true,

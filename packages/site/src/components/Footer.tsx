@@ -1,48 +1,71 @@
-import styled, { useTheme } from 'styled-components';
-
+import { Link } from 'gatsby';
 import { MetaMask } from './MetaMask';
 import { PoweredBy } from './PoweredBy';
-import { ReactComponent as MetaMaskFox } from '../assets/metamask_fox.svg';
-
-const FooterWrapper = styled.footer`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding-top: 2.4rem;
-  padding-bottom: 2.4rem;
-  border-top: 1px solid ${(props) => props.theme.colors.border?.default};
-`;
-
-const PoweredByButton = styled.a`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding: 1.2rem;
-  border-radius: ${({ theme }) => theme.radii.button};
-  box-shadow: ${({ theme }) => theme.shadows.button};
-  background-color: ${({ theme }) => theme.colors.background?.alternative};
-`;
-
-const PoweredByContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin-left: 1rem;
-`;
 
 export const Footer = () => {
-  const theme = useTheme();
+  const footerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '3rem 0',
+    borderTop: '1px solid var(--color-primary)',
+    backgroundColor: 'var(--color-bg)',
+    color: 'var(--color-text)',
+  };
+
+  const linkStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    textDecoration: 'none',
+  };
+
+ 
 
   return (
-    <FooterWrapper>
-      <PoweredByButton href="https://docs.metamask.io/" target="_blank">
-        <MetaMaskFox />
-        <PoweredByContainer>
-          <PoweredBy color={theme.colors.text?.muted} />
-          <MetaMask color={theme.colors.text?.default} />
-        </PoweredByContainer>
-      </PoweredByButton>
-    </FooterWrapper>
+    <footer style={footerStyle}>
+      {/* Navigation similar to Header */}
+      <nav className="flex flex-col md:flex-row items-center gap-4 md:gap-6 mb-6">
+        <Link to="#" className="text-[var(--color-text)] hover:text-[var(--color-primary-light)] transition-colors">
+          Browser Extension
+        </Link>
+        <Link to="#" className="text-[var(--color-text)] hover:text-[var(--color-primary-light)] transition-colors">
+          MetaMask Snap
+        </Link>
+      </nav>
+
+      {/* Branding button */}
+      <a
+        href="https://docs.metamask.io/"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={linkStyle}
+        className="mb-4"
+      >
+       
+      </a>
+
+      {/* Footer links */}
+      <div className="flex gap-6 text-sm">
+        <a
+          href="/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[var(--color-text)] underline hover:opacity-80 transition-opacity"
+        >
+          Privacy Policy
+        </a>
+        <a
+          href="/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[var(--color-text)] underline hover:opacity-80 transition-opacity"
+        >
+          Terms of Service
+        </a>
+        <span className="text-gray-400">© 2026 DCA Marketplace</span>
+      </div>
+    </footer>
   );
 };
+

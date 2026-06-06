@@ -1,5 +1,8 @@
 import type { SnapConfig } from '@metamask/snaps-cli';
 import { resolve } from 'path';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 const config: SnapConfig = {
   input: resolve(__dirname, 'src/index.tsx'),
@@ -8,6 +11,9 @@ const config: SnapConfig = {
   },
   polyfills: {
     buffer: true,
+  },
+  environment: {
+    API_URL: process.env.API_URL || 'http://localhost:4000',
   },
 };
 

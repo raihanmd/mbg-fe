@@ -1,13 +1,9 @@
-export type SkillConfig = Record<string, any>; // Placeholder for skillConfigSchema
+import {
+  PrepareInstallation,
+  PrepareInstallationResponse,
+} from 'src/types/PrepareInstallation';
 
-export type PrepareSmartAccount = {
-  userAddress: string;
-  smartAccountAddress: string;
-  chainId: number;
-  skillId: string;
-  skillType?: string;
-  config: string;
-};
+export type SkillConfig = Record<string, any>; // Placeholder for skillConfigSchema
 
 // export interface PermissionReview {
 //   prepareId: string;
@@ -32,11 +28,12 @@ export type PrepareSmartAccount = {
 //   prepareSnapshot: Record<string, unknown>;
 //   expiresAt: string;
 // }
+const API_URL = process.env.API_URL;
 
 export const prepareInstallation = async (
-  body: PrepareSmartAccount,
-): Promise<any> => {
-  const response = await fetch(`${process.env.API_URL}/installations/prepare`, {
+  body: PrepareInstallation,
+): Promise<PrepareInstallationResponse> => {
+  const response = await globalThis.fetch(`${API_URL}/installations/prepare`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

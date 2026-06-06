@@ -1,0 +1,22 @@
+/* Footer component styling using design tokens */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.4rem 0;
+  border-top: 1px solid var(--color-primary);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.footer-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.footer-powered {
+  display: flex;
+  flex-direction: column;
+  margin-left: 1rem;
+}

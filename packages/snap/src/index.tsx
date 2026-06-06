@@ -18,7 +18,12 @@ import {
   Field,
   Input,
   Button,
+  Image,
+  Divider,
+  Form,
+  Row,
 } from '@metamask/snaps-sdk/jsx';
+import { getAllSkills, getSkillById } from './api/skills';
 
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
@@ -30,149 +35,212 @@ import {
  * @returns The result of `snap_dialog`.
  * @throws If the request method is not valid for this snap.
  */
-let temporarySelectedSkill = '';
 export const onHomePage: OnHomePageHandler = async () => {
+  const skill = await getAllSkills();
+
   return {
     content: (
-      <Box>
-        <Heading>AI Investment Copilot 🤖</Heading>
-        <Text>Silakan pilih strategi DCA bertenaga AI kamu:</Text>
-
-        {/* Selector ini akan langsung tampil di dalam MetaMask */}
-        <Selector name="skill-selector" title="Pilih Strategi">
-          <SelectorOption value="dca-reasoning-btc">
-            <Card
-              title="BTC Smart Timing (AI)"
-              value="DCA otomatis dengan analisa sentimen pasar via x402 Bazaar."
-            />
-          </SelectorOption>
-          <SelectorOption value="dca-standard-eth">
-            <Card
-              title="Standard ETH DCA"
-              value="Membeli ETH berkala secara kaku setiap minggu tanpa AI."
-            />
-          </SelectorOption>
+      <Form name="skill-selector-form">
+        <Heading>DCA Skill Wallet</Heading>
+        <Text>Choose The Skill To Install</Text>
+        <Divider />
+        <Selector
+          name="skill-selector"
+          title="Choose Skill"
+          value={skill[0]?._id}
+        >
+          {skill.map((item) => (
+            <SelectorOption value={item._id}>
+              <Card value={item.name} title={''} image={item.iconUrl} />
+            </SelectorOption>
+          ))}
         </Selector>
-        <Field label="Nominal Investasi (USDC)">
-          <Input
-            name="dca-amount-input"
-            placeholder="Masukkan jumlah, contoh: 10"
-            type="number"
-          />
-        </Field>
-        <Button name="submit-dca" variant="primary">
-          Submit
+
+        <Button name="submit-dca" type="submit" variant="primary" size="md">
+          Install Skill
         </Button>
-      </Box>
+      </Form>
     ),
   };
 };
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
-  // Kita hanya perlu mendengarkan ketika tombol "submit-dca" diklik
-  if (event.name === 'submit-dca') {
-    // 1. Ambil nilai nominal dari Input
-    const inputAmount = event.context?.['dca-amount-input'] || '0';
-
-    // 2. Ambil nilai strategi dari Selector (MetaMask menyimpannya di dalam context sesuai nama Selector-nya)
-    const selectedSkillId =
-      event.context?.['skill-selector'] || 'Belum memilih';
-
-    // 3. Update UI menjadi Loading/Memproses
+  // 1. Validasi harus mengecek nama FORM-nya, bukan nama tombolnya!
+  if (
+    event.type === UserInputEventType.FormSubmitEvent &&
+    event.name === 'skill-selector-form'
+  ) {
+    // Tampilkan UI Loading secepatnya
     await snap.request({
       method: 'snap_updateInterface',
       params: {
         id,
         ui: (
           <Box>
-            <Heading>Memproses Data... ⏳</Heading>
-            <Text>Strategi: **{selectedSkillId}**</Text>
-            <Text>Nominal: **{inputAmount} USDC**</Text>
-            <Text>
-              Sedang mendaftarkan konfigurasi ke backend NestJS kamu...
-            </Text>
+            <Heading>Fetching Strategy... ⏳</Heading>
+            <Text>Sedang mengambil data strategi dari backend NestJS...</Text>
           </Box>
         ),
       },
     });
 
-    // 4. DI SINI TEMPAT KAMU FETCH KE BACKEND NESTJS KAMU NANTI!
-    // try {
-    //   const response = await fetch('http://localhost:3000/installations/prepare', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       skillId: selectedSkillId,
-    //       config: { amount: inputAmount }
-    //     })
-    //   });
-    //   const data = await response.json();
-    //
-    //   // Jika sukses, pemicu pop-up grant permission ERC-7715 di sini
-    // } catch (err) { ... }
-  }
-};
+    try {
+      // 2. Ambil ID dari dalam objek event.value menggunakan key dari nama Selector kamu
+      const formValues = event.value as Record<string, any>;
+      const selectedSkillId = formValues?.['skill-selector'];
 
-export const onRpcRequest: OnRpcRequestHandler = async ({
-  origin,
-  request,
-}) => {
-  switch (request.method) {
-    case 'hello': {
-      return snap.request({
-        method: 'snap_dialog',
-        params: {
-          type: 'confirmation',
-          content: (
-            <Box>
-              <Text>Helo</Text>
-            </Box>
-          ),
-        },
-      });
-    }
-    case 'test': {
-      return snap.request({
-        method: 'snap_dialog',
-        params: {
-          type: 'prompt',
-          content: (
-            <Box>
-              <Heading>What is the wallet address?</Heading>
-              <Text>Please enter the wallet address to be monitored</Text>
-            </Box>
-          ),
-          placeholder: '0x123...',
-        },
-      });
-    }
+      console.log('ID Skill yang dipilih:', selectedSkillId);
 
-    case 'nyoba': {
-      const interfaceId = await snap.request({
-        method: 'snap_createInterface',
+      if (!selectedSkillId) {
+        throw new Error('Kamu belum memilih strategi di halaman awal!');
+      }
+
+      // 3. Panggil API ke NestJS
+      const selectedSkill = await getSkillById(selectedSkillId);
+      console.log('Data Skill Terpilih:', selectedSkill);
+
+      if (!selectedSkill) {
+        throw new Error('Strategi tidak ditemukan di database backend.');
+      }
+      const skillName = selectedSkill.name;
+      const skillDescription = selectedSkill.description;
+      const chainId = selectedSkill.chainId;
+      const cronExpression = selectedSkill.cronExpression;
+      const selectors = selectedSkill.delegationScope?.selectors || [];
+      const outputTokenParam = selectedSkill.parameters?.find(
+        (p: any) => p.key === 'outputToken',
+      );
+
+      // Update UI Sukses dengan struktur <Row> dan <Form>
+      await snap.request({
+        method: 'snap_updateInterface',
         params: {
+          id,
           ui: (
-            <Selector name="selector-example" title="Select an option">
-              <SelectorOption value="option-1">
-                <Card title="Option 1" value="First option" />
-              </SelectorOption>
-              <SelectorOption value="option-2">
-                <Card title="Option 2" value="Second option" />
-              </SelectorOption>
-            </Selector>
+            <Form name="confirm-installation-form">
+              <Heading>Konfirmasi Strategi 📝</Heading>
+
+              {/* DETAIL STRATEGI MENGGUNAKAN ROW */}
+              <Box>
+                <Row label="Strategi">
+                  <Text>
+                    <Bold>{skillName}</Bold>
+                  </Text>
+                </Row>
+                <Row label="Network">
+                  <Text>Base Sepolia</Text>
+                </Row>
+                <Row label="Jadwal Run">
+                  <Text>
+                    {cronExpression === '0 9 * * *'
+                      ? 'Setiap Hari (09:00)'
+                      : cronExpression}
+                  </Text>
+                </Row>
+              </Box>
+
+              <Divider />
+
+              <Text>
+                <Bold>Cara Kerja:</Bold>
+              </Text>
+              <Text>{skillDescription}</Text>
+
+              <Divider />
+
+              {/* INPUT PARAMETER DINAMIS USER */}
+              <Text>
+                <Bold>Configure Skill Parameters:</Bold>
+              </Text>
+
+              <Text>Target Token:</Text>
+              <Selector
+                name="param-output-token"
+                title="Select Token"
+                value={outputTokenParam?.defaultValue}
+              >
+                {(outputTokenParam?.options || []).map((opt: string) => (
+                  <SelectorOption key={opt} value={opt}>
+                    <Card
+                      title={opt.toUpperCase()}
+                      value=""
+                      image={
+                        opt === 'weth'
+                          ? 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/eth.png'
+                          : ''
+                      }
+                    />
+                  </SelectorOption>
+                ))}
+              </Selector>
+
+              <Text>Amount per run (USDC):</Text>
+              <Input
+                name="param-amount-usdc"
+                placeholder="Example: 10"
+                type="number"
+                value="10"
+              />
+
+              <Divider />
+
+              {/* DAFTAR IZIN KONTRAK MENGGUNAKAN ROW */}
+              <Text>
+                <Bold>Izin Kontrak (ERC-7715):</Bold>
+              </Text>
+              <Box>
+                {selectors.map((selector: string) => {
+                  const functionName = selector.split('(')[0] as string;
+                  return (
+                    <Row key={selector} label="Allowed Method">
+                      <Text>
+                        <Bold>{functionName}</Bold>
+                      </Text>
+                    </Row>
+                  );
+                })}
+              </Box>
+
+              <Divider />
+
+              <Button name="execute-prepare" type="submit" variant="primary">
+                Confirm & Grant Permissions 🚀
+              </Button>
+            </Form>
           ),
         },
       });
-      return snap.request({
-        method: 'snap_dialog',
+    } catch (error: any) {
+      console.error('Error di onUserInput:', error);
+
+      // 5. Update UI Error jika proses di atas ada yang gagal/crash
+      await snap.request({
+        method: 'snap_updateInterface',
         params: {
-          type: 'confirmation', // Bisa 'confirmation' atau 'alert'
-          id: interfaceId, // <--- Masukkan ID interface yang kita buat di atas
+          id,
+          ui: (
+            <Box>
+              <Heading>System Error ❌</Heading>
+              <Text>Gagal menyiapkan instalasi strategi.</Text>
+              <Text>
+                Alasan: <Bold>{error.message || 'Unknown Error'}</Bold>
+              </Text>
+              <Divider />
+              <Text>
+                Pastikan backend NestJS kamu sudah aktif di localhost.
+              </Text>
+            </Box>
+          ),
         },
       });
     }
+  }
 
-
-    default:
-      throw new Error('Method not found.');
+  // == HANDLE UNTUK TOMBOL CONFIRM INSTALLATION ==
+  if (
+    event.type === UserInputEventType.ButtonClickEvent &&
+    event.name === 'confirm-installation'
+  ) {
+    // Di sini nanti tempat kamu memanggil fungsi POST /installations/prepare kamu!
+    console.log('User mengonfirmasi instalasi, saatnya tembak prepare!');
   }
 };
