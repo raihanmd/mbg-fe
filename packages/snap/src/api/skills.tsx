@@ -25,5 +25,6 @@ export const getSkillById = async (skillId: string): Promise<SkillItem> => {
   }
 
   const data = await response.json();
+  console.log(data);
   return data as SkillItem;
 };

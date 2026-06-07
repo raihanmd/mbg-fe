@@ -25,7 +25,6 @@ const Index = () => {
 
   return (
     <div className="flex flex-col w-full items-center justify-start pb-20">
-      {/* Header is rendered by App component */}
       <HeroSections />
       <HowToUse />
     

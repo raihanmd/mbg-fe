@@ -43,4 +43,3 @@ export const prepareInstallation = async (
 
   return await response.json();
 };
-// Hook implementation will go here
