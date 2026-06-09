@@ -3,6 +3,12 @@ import {
   OnUserInputHandler,
   UserInputEventType,
   type OnRpcRequestHandler,
+  OnInstallHandler,
+  OnUpdateHandler,
+  OnActiveHandler,
+  OnStartHandler,
+  OnInactiveHandler,
+  OnSignatureHandler,
 } from '@metamask/snaps-sdk';
 import {
   Box,
@@ -15,10 +21,12 @@ import {
   Divider,
   Form,
 } from '@metamask/snaps-sdk/jsx';
-import { getAllSkills, getSkillById } from './api/skills';
+import { getAllSkills } from './api/skills';
 import handleSkillSelectorFormSubmit from './handler/skillSelectorForm';
+import { handleConfirmInstallation } from './handler/confirmInstallation';
 import { handlePrepareInstallation } from './handler/prepareInstallation';
-
+import { getSmartAccountAddressInSnap } from './utils/smartAccount';
+import { getUsdcBalance } from './utils/getUsdcBalance';
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
  *
@@ -58,37 +66,88 @@ export const onHomePage: OnHomePageHandler = async () => {
   };
 };
 
-
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
   try {
-    // 1. Validasi harus mengecek nama FORM-nya, bukan nama tombolnya!
+    // 1. HANDLE UNTUK SELECTOR FORM (PILIH SKILL)
     if (
       event.type === UserInputEventType.FormSubmitEvent &&
       event.name === 'skill-selector-form'
     ) {
-     await handleSkillSelectorFormSubmit({ id, event });
+      // Ambil saldo hanya saat form ini disubmit
+      const { smartAccountAddress } = await getSmartAccountAddressInSnap();
+      const usdcRawBalance = await getUsdcBalance(smartAccountAddress, 84532);
+
+      await handleSkillSelectorFormSubmit({ id, event, usdcRawBalance });
+      return; // Langsung keluar fungsi setelah selesai menangani event ini
     }
-    // == HANDLE UNTUK TOMBOL CONFIRM INSTALLATION ==
+
+    // 2. HANDLE UNTUK TOMBOL CONFIRM INSTALLATION
     if (
       event.type === UserInputEventType.FormSubmitEvent &&
       event.name.startsWith('prepare-installation-form')
     ) {
-     const eventNameParts = event.name.split(':');
-     const extractedSkillId = eventNameParts[1];
-      await handlePrepareInstallation({ event, selectedSkillId: extractedSkillId!});
+      // Ambil data address hanya saat user klik tombol confirm
+      const { userAddress, smartAccountAddress } =
+        await getSmartAccountAddressInSnap();
+
+      const eventNameParts = event.name.split(':');
+      const extractedSkillId = eventNameParts[1];
+      const extractedRunType = eventNameParts[2];
+      await handlePrepareInstallation({
+        id,
+        event,
+        selectedSkillId: extractedSkillId!,
+        extractedRunType: extractedRunType!,
+        userAddress,
+        smartAccountAddress,
+      });
+      return;
     }
-  } catch (error) {
+    if (
+      event.type === UserInputEventType.FormSubmitEvent &&
+      event.name.startsWith('sign-delegation-form')
+    ) {
+      const eventNameParts = event.name.split(':');
+      const extractedSkillId = eventNameParts[1];
+
+      const { userAddress, smartAccountAddress } =
+        await getSmartAccountAddressInSnap();
+
+      // 1. Ambil data dari secure Snap state storage
+      await handleConfirmInstallation({
+        id,
+        event,
+        skillId: extractedSkillId!,
+        userAddress,
+        smartAccountAddress,
+      });
+      return;
+    }
+  } catch (error: any) {
     console.error('Error in onUserInput:', error);
     await snap.request({
-      method: 'snap_dialog',
+      method: 'snap_updateInterface',
       params: {
-        type: 'alert',
-        content: (
+        id,
+        ui: (
           <Box>
-            <Text>Error when controlling your DCA Skill</Text>
+            <Text>
+              Error:{' '}
+              {error.message ||
+                'Something went wrong when controlling your DCA Skill'}
+            </Text>
           </Box>
         ),
       },
     });
   }
+};
+
+export const onSignature: OnSignatureHandler = async ({
+  signature,
+    signatureOrigin,
+}) => {
+  // Returning null tells MetaMask that this Snap has no objections
+  // and provides no extra UI insights for this signature.
+  return null;
 };

@@ -43,3 +43,18 @@ export const prepareInstallation = async (
 
   return await response.json();
 };
+
+
+export const confirmInstallation = async (
+  body: PrepareInstallation,
+): Promise<PrepareInstallationResponse> => {
+  const response = await globalThis.fetch(`${API_URL}/installations/confirm`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  return await response.json();
+};
