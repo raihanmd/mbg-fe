@@ -19,14 +19,12 @@ export const getUsdcBalance = async (
     return '0';
   }
 
-  // 1. Inisialisasi Public Client Viem khusus untuk network target (Base Sepolia)
   const publicClient = createPublicClient({
     chain: baseSepolia,
-    transport: http('https://sepolia.base.org'), // Gunakan RPC Base Sepolia resmi
+    transport: http('https://sepolia.base.org'), 
   });
 
   try {
-    // 2. Baca kontrak menggunakan default ERC20 ABI bawaan Viem
     const balanceResult = await publicClient.readContract({
       address: contractAddress,
       abi: erc20Abi,
@@ -34,10 +32,9 @@ export const getUsdcBalance = async (
       args: [address as `0x${string}`],
     });
 
-    // Hasilnya berupa BigInt (misal: 15000000n), kita ubah ke string agar aman untuk input value
     return balanceResult.toString();
   } catch (error) {
     console.error('Error saat ambil saldo via Viem:', error);
-    return '0'; // Fallback jika user baru atau koneksi RPC bermasalah
+    return '0'; 
   }
 };

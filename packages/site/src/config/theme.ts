@@ -122,7 +122,6 @@ export const dark: DefaultTheme = {
  */
 export const GlobalStyle = createGlobalStyle`
   html {
-    /* 62.5% of the base size of 16px = 10px.*/
     font-size: 62.5%;
   }
 

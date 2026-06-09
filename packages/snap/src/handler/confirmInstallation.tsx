@@ -1,5 +1,6 @@
-import { Box,Heading,Text } from "@metamask/snaps-sdk/jsx";
+import { Box,Button,Form,Heading,Text } from "@metamask/snaps-sdk/jsx";
 import { confirmInstallation } from "../api/installations";
+import { getSmartAccountsEnvironment } from '@metamask/smart-accounts-kit';
 export const handleConfirmInstallation = async ({
   id,
   event,
@@ -13,29 +14,29 @@ export const handleConfirmInstallation = async ({
   userAddress: string;
   smartAccountAddress: string;
 }) => {
-    const state = (await snap.request({
+  
+  const state = (await snap.request({
       method: 'snap_manageState',
       params: { operation: 'get' },
     })) as any;
-const currentInterfaceId = event.context;
+    const currentInterfaceId: string = event.context || id;
     const { resp, parameters } = state?.pendingInstallation || {};
-
     if (!resp || !resp.delegation) {
       throw new Error(
         'Installation session expired. Please re-configure your skill.',
       );
-	}
+    }
     const originalDelegation = resp.delegation;
+    const environment = getSmartAccountsEnvironment(resp.chainId);
 	
 const typedData = {
   domain: {
-    name: 'MetaMask Hybrid Smart Account', // 👈 Sesuaikan dengan nama domain ERC-5267 dari SDK kamu
+    name: 'DelegationManager',
     version: '1',
     chainId: resp.chainId, // Base Sepolia
-    verifyingContract: originalDelegation.delegator, // Biasanya smart account address
+    verifyingContract: environment.DelegationManager, // Biasanya smart account address
   },
   types: {
-    // Definisikan struct EIP-712 yang sesuai dengan skema Delegation kamu
     EIP712Domain: [
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
@@ -52,7 +53,6 @@ const typedData = {
     Caveat: [
       { name: 'enforcer', type: 'address' },
       { name: 'terms', type: 'bytes' },
-      { name: 'args', type: 'bytes' },
     ],
   },
   primaryType: 'Delegation',
@@ -60,8 +60,11 @@ const typedData = {
     delegate: originalDelegation.delegate,
     delegator: originalDelegation.delegator,
     authority: originalDelegation.authority,
-    caveats: originalDelegation.caveats,
-    salt: BigInt(originalDelegation.salt).toString(), // Pastikan salt aman jika berupa hex/large int
+    caveats: originalDelegation.caveats.map((c: any) => ({
+      enforcer: c.enforcer,
+      terms: c.terms,
+    })),
+    salt: originalDelegation.salt,
   },
 };
     const salt = resp.salt;
@@ -90,24 +93,8 @@ const typedData = {
     };
 
     // 4. Send the data to your NestJS confirm endpoint
-    const confirmResp = await confirmInstallation(confirmBody);
-    console.log('Installation confirmed:', confirmResp);
+    await confirmInstallation(confirmBody);
 
-    // 5. Show success screen to the user
-    await snap.request({
-      method: 'snap_updateInterface',
-      params: {
-       id: currentInterfaceId,
-        ui: (
-          <Box>
-            <Heading>Robot Activated</Heading>
-            <Text>
-              Your DCA Automation Skill has been successfully signed and
-              activated on the server. The bot is now running.
-            </Text>
-          </Box>
-        ),
-      },
-    });
+  
     return;
 }

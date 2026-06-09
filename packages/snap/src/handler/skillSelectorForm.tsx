@@ -13,7 +13,6 @@ const handleSkillSelectorFormSubmit = async ({
   event: any;
   usdcRawBalance: string;
 }): Promise<void> => {
-  // Tampilkan UI Loading secepatnya
   await snap.request({
     method: 'snap_updateInterface',
     params: {
@@ -28,7 +27,6 @@ const handleSkillSelectorFormSubmit = async ({
   });
 
   try {
-    // 2. Ambil ID dari dalam objek event.value menggunakan key dari nama Selector kamu
     const formValues = event.value as Record<string, any>;
     const selectedSkillId = formValues?.['skill-selector'];
 
@@ -43,17 +41,6 @@ const handleSkillSelectorFormSubmit = async ({
     console.log('Data Skill Terpilih:', selectedSkill);
 
     if (!selectedSkill || !selectedSkill.parameters) {
-      await snap.request({
-        method: 'snap_dialog',
-        params: {
-          type: 'alert',
-          content: (
-            <Box>
-              <Text>Gagal memuat data strategi. Data tidak valid.</Text>
-            </Box>
-          ),
-        },
-      });
       throw new Error('Failed to load skill data');
     }
     const skillName = selectedSkill.name;
@@ -81,15 +68,14 @@ const handleSkillSelectorFormSubmit = async ({
       (p: any) => p.key === 'dailySpendLimit',
     );
     const defaultHumanDailyLimit = dailyLimitParam?.defaultValue
-      ? formatUnits(BigInt(dailyLimitParam.defaultValue), 6) // Mengubah aman dari BigInt ke String "50"
+      ? formatUnits(BigInt(dailyLimitParam.defaultValue), 6)
       : '50';
-    
+
     const selectors = selectedSkill.delegationScope?.selectors || [];
     const outputTokenParam = selectedSkill.parameters?.find(
       (p: any) => p.key === 'outputToken',
     );
 
-    // Update UI Sukses dengan struktur <Row> dan <Form>
     await snap.request({
       method: 'snap_updateInterface',
       params: {
@@ -100,7 +86,6 @@ const handleSkillSelectorFormSubmit = async ({
           >
             <Heading>Konfirmasi Strategi 📝</Heading>
 
-            {/* DETAIL STRATEGI MENGGUNAKAN ROW */}
             <Box>
               <Row label="Strategi">
                 <Text>
@@ -213,32 +198,26 @@ const handleSkillSelectorFormSubmit = async ({
               </Box>
             ) : null}
 
-            {percentOfInboundParam ? (
+            {amountPerRunParam || percentOfInboundParam ? (
               <Box>
                 <Text>
-                  <Bold>{percentOfInboundParam.label} :</Bold>
+                  <Bold>Allocation Per Run :</Bold>
                 </Text>
-                <Text>{percentOfInboundParam.description}</Text>
-                <Input
-                  name="param-percent-inbound"
-                  type="number"
-                  value={defaultHumanPercent}
-                />
-              </Box>
-            ) : null}
-
-            {amountPerRunParam ? (
-              <Box>
-                <Text>
-                  <Bold>{amountPerRunParam.label} :</Bold>
-                </Text>
-                <Text>{amountPerRunParam.description}</Text>
+                <Text>Configure the amount of USDC or Percentage</Text>
                 <Text>
                   Current USDC Balance: <Bold>{usdcHumanBalance} USDC</Bold>
                 </Text>
                 <Input
-                  name="param-amount-per-run"
+                  name="param-allocation"
                   type="number"
+                  step={0.01}
+                  max={
+                    spendModeParam?.defaultValue === 'fixed'
+                      ? Number(usdcHumanBalance)
+                      : 100
+                  }
+                  min={0}
+                  placeholder="e.g. 10 for 10 USDC or 10%"
                   value={usdcHumanBalance}
                 />
               </Box>
@@ -253,6 +232,10 @@ const handleSkillSelectorFormSubmit = async ({
                 <Input
                   name="param-daily-limit"
                   type="number"
+                  step={0.01}
+                  max={Number(usdcHumanBalance)}
+                  min={0}
+                  placeholder={`Maximal: ${usdcHumanBalance}`}
                   value={defaultHumanDailyLimit}
                 />
               </Box>

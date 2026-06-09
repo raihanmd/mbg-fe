@@ -1,10 +1,11 @@
-
-import { prepareInstallation } from "../api/installations";
+import { prepareInstallation } from '../api/installations';
 import {
   Box,
   Button,
   Divider,
   Form,
+  Row,
+  Bold,
   Heading,
   Text,
 } from '@metamask/snaps-sdk/jsx';
@@ -25,63 +26,63 @@ export const handlePrepareInstallation = async ({
   userAddress: string;
   smartAccountAddress: string;
 }) => {
-  const formVals = event.value as Record<string, any>;
-  const rawOutputToken = formVals?.['param-output-token'];
-  const rawAmountUsdc = formVals?.['param-amount-usdc'];
-  const rawSpendMode = formVals?.['param-spend-mode'];
-  const rawAmountPerRun = formVals?.['param-amount-per-run'];
-  const rawPercentInbound = formVals?.['param-percent-inbound'];
-  const rawDailyLimit = formVals?.['param-daily-limit'];
+  try {
+    const formVals = event.value as Record<string, any>;
+    const rawOutputToken = formVals?.['param-output-token'];
+    const rawAmountUsdc = formVals?.['param-amount-usdc'];
+    const rawSpendMode = formVals?.['param-spend-mode'];
+    const rawAllocation = formVals?.['param-allocation'];
+    const rawDailyLimit = formVals?.['param-daily-limit'];
 
-  const validateNumberInput = (value: any, fieldName: string) => {
-    if (value !== undefined && value !== null && value !== '') {
-      const parsed = Number(value);
-      if (isNaN(parsed) || parsed <= 0) {
-        throw new Error(
-          `Input tidak valid! Kolom [${fieldName}] harus berupa angka positif dan tidak boleh mengandung huruf.`,
-        );
+    const validateNumberInput = (value: any, fieldName: string) => {
+      if (value !== undefined && value !== null && value !== '') {
+        const parsed = Number(value);
+        if (isNaN(parsed) || parsed <= 0) {
+          throw new Error(
+            `Input tidak valid! Kolom [${fieldName}] harus berupa angka positif dan tidak boleh mengandung huruf.`,
+          );
+        }
+      }
+    };
+    validateNumberInput(rawAmountUsdc, 'Amount USDC');
+    validateNumberInput(rawAllocation, 'Allocation');
+    validateNumberInput(rawDailyLimit, 'Daily Spend Limit');
+    console.log(formVals);
+    let params: Record<string, any> = {};
+    if (extractedRunType == 'cron') {
+      params.outputToken = formVals?.['param-output-token'];
+      if (rawAmountUsdc) {
+        params.amountUsdc = parseUnits(rawAmountUsdc, 6).toString();
       }
     }
-  };
-  validateNumberInput(rawAmountUsdc, 'Amount USDC');
-  validateNumberInput(rawAmountPerRun, 'Amount Per Run');
-  validateNumberInput(rawPercentInbound, 'Percent Inbound');
-  validateNumberInput(rawDailyLimit, 'Daily Spend Limit');
-  console.log(formVals);
-  let params: Record<string, any> = {};
-  if (extractedRunType == 'cron') {
-    params.outputToken = formVals?.['param-output-token'];
-    if (rawAmountUsdc) {
-      params.amountUsdc = parseUnits(rawAmountUsdc, 6).toString(); // Fix typo amoountUsdc
-    }
-  }
-  if (extractedRunType == 'event-trigger') {
-    params.outputToken = rawOutputToken;
-    params.spendMode = rawSpendMode;
-    if (rawSpendMode === 'fixed' && rawAmountPerRun) {
-      params.amountPerRun = parseUnits(rawAmountPerRun, 6).toString();
+    if (extractedRunType == 'event-trigger') {
+      params.outputToken = rawOutputToken;
+      params.spendMode = rawSpendMode;
+     if (rawAllocation) {
+       if (rawSpendMode === 'fixed') {
+         params.amountPerRun = parseUnits(rawAllocation, 6).toString();
+       }
+       if (
+         rawSpendMode === 'percent-of-inbound'
+       ) {
+         params.percentOfInboundBps = Math.round(
+           Number(rawAllocation) * 100,
+         ).toString();
+       }
+     }
+
+      if (rawDailyLimit) {
+        params.dailySpendLimit = parseUnits(rawDailyLimit, 6).toString();
+      }
     }
 
-    // Hanya isi percentOfInboundBps jika spendMode-nya adalah percent-of-inbound
-    // Serta pastikan dikali 100 (bukan 10000) untuk mengubah % ke Basis Points (bps)
-    if (rawSpendMode === 'percent-of-inbound' && rawPercentInbound) {
-      params.percentOfInboundBps = Math.round(Number(rawPercentInbound) * 100);
-    }
+    const body = {
+      skillId: selectedSkillId,
+      userAddress: userAddress,
+      smartAccountAddress: smartAccountAddress,
+      parameters: params,
+    };
 
-    // Daily spend limit selalu diisi sebagai guardrail (6 desimal)
-    if (rawDailyLimit) {
-      params.dailySpendLimit = parseUnits(rawDailyLimit, 6).toString();
-    }
-  }
-
-  const body = {
-    skillId: selectedSkillId,
-    userAddress: userAddress, // TODO: populate with actual user address
-    smartAccountAddress: smartAccountAddress, // TODO: populate with actual smart account address
-    parameters: params,
-  };
-  console.log(body);
-  try {
     const resp = await prepareInstallation(body);
     console.log('prepareInstallation response:', resp);
     await snap.request({
@@ -91,7 +92,7 @@ export const handlePrepareInstallation = async ({
         newState: {
           pendingInstallation: {
             resp,
-            parameters: body.parameters, // Saved safe and sound here
+            parameters: body.parameters,
           } as any,
         },
       },
@@ -102,45 +103,80 @@ export const handlePrepareInstallation = async ({
         id,
         ui: (
           <Box>
-            <Heading>DCA Robot Activation</Heading>
+            <Heading>DCA Robot Activation 🤖</Heading>
             <Text>
               The installation payload has been prepared. Please review the
               automation delegation rules below before activation:
             </Text>
-
             <Divider />
-
+            {/* DETAIL DELEGASI MENGGUNAKAN ROW AGAR RAPI KIRI-KANAN */}
             <Box>
-              <Text>Smart Account (Delegator):</Text>
-              <Text>{resp.delegation.delegator}</Text>
+              <Row label="Smart Account">
+                <Text>
+                  <Bold>
+                    {`${resp.delegation.delegator.slice(0, 6)}...${resp.delegation.delegator.slice(-4)}`}
+                  </Bold>
+                </Text>
+              </Row>
 
-              <Text>Bot Executor (Delegate):</Text>
-              <Text>{resp.executorAddress}</Text>
+              <Row label="Bot Executor">
+                <Text>
+                  {`${resp.executorAddress.slice(0, 6)}...${resp.executorAddress.slice(-4)}`}
+                </Text>
+              </Row>
 
-              <Text>Network Chain ID:</Text>
-              <Text>{resp.chainId.toString()} (Base Sepolia)</Text>
+              <Row label="Network">
+                <Text>
+                  <Bold>Base Sepolia</Bold> ({resp.chainId.toString()})
+                </Text>
+              </Row>
 
-              <Text>Security Constraints:</Text>
-              <Text>{resp.delegation.caveats.length.toString()} Active Caveat Rules</Text>
+              <Row label="Security Constraints">
+                <Text>
+                  <Bold>{resp.delegation.caveats.length.toString()}</Bold>{' '}
+                  Active Rules
+                </Text>
+              </Row>
             </Box>
-
             <Divider />
-
+            {/* INFORMASI NOTICE DIBUAT AGAR LEBIH MENCOLOK */}
             <Text>
-              Notice: Clicking the button below will prompt a secure
-              cryptographic signature request. This authorization is gasless and
-              grants the AI permission to execute swaps strictly within the
-              defined caveat constraints.
+              <Bold>Notice:</Bold> Clicking the button below will prompt a
+              secure cryptographic signature request. This authorization is{' '}
+              <Bold>gasless</Bold> and grants the permission to execute swaps
+              strictly within the defined constraints.
             </Text>
-
             <Form name={`sign-delegation-form:${resp.skillId}`}>
-              <Button type="submit">Sign and Activate</Button>
+              <Button type="submit" variant="primary">
+                Sign and Activate Robot 🚀
+              </Button>
             </Form>
           </Box>
         ),
       },
     });
   } catch (e: any) {
-    throw e;
+    console.error('prepareInstallation error', e);
+    const status = e?.response?.status;
+    let errorMsg = '';
+    if (status === 409) {
+      // Conflict: skill already installed
+      errorMsg = e?.response?.data?.message ?? 'Skill already installed.';
+    } else {
+      errorMsg = e?.response?.data?.message ?? e?.message ?? 'Unexpected error';
+    }
+    // Show error UI to the user
+    await snap.request({
+      method: 'snap_updateInterface',
+      params: {
+        id,
+        ui: (
+          <Box>
+            <Heading>Installation Error</Heading>
+            <Text>{errorMsg}</Text>
+          </Box>
+        ),
+      },
+    });
   }
 };
