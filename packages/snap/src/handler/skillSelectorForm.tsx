@@ -30,6 +30,31 @@ const handleSkillSelectorFormSubmit = async ({
   usdcRawBalance: string;
   smartAccountAddress: string;
 }): Promise<void> => {
+  const { checkDeployed } = await import("../utils/deployment");
+  const isDeployed = await checkDeployed(smartAccountAddress);
+  if (!isDeployed) {
+    await snap.request({
+      method: "snap_updateInterface",
+      params: {
+        id,
+        ui: (
+          <Box>
+            <Heading>Smart Account Not Deployed</Heading>
+            <Text>
+              Your smart account must be deployed on-chain before installing a
+              skill. Please deploy first from the home page.
+            </Text>
+            <Button name="nav:deploy-account" variant="primary">
+              Deploy Now
+            </Button>
+            <Button name="nav:home">Back to Home</Button>
+          </Box>
+        ),
+      },
+    });
+    return;
+  }
+
   await snap.request({
     method: "snap_updateInterface",
     params: {

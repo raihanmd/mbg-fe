@@ -1,11 +1,26 @@
 import { createPublicClient, createWalletClient, custom, http } from 'viem';
-import { baseSepolia } from 'viem/chains'; // Pakai baseSepolia sesuai chainId 84532 kamu
+import { baseSepolia } from 'viem/chains';
 import {
   Implementation,
   toMetaMaskSmartAccount,
 } from '@metamask/smart-accounts-kit';
 
-export const getSmartAccountAddressInSnap = async () => {
+import type { SmartAccount } from 'viem/account-abstraction';
+
+export type MetaMaskSmartAccount = SmartAccount & {
+  getFactoryArgs: () => Promise<{
+    factory: `0x${string}`;
+    factoryData: `0x${string}`;
+  }>;
+  encodeCalls: (calls: readonly { to: `0x${string}`; value?: bigint; data?: `0x${string}` }[]) => Promise<`0x${string}`>;
+  isDeployed: () => Promise<boolean>;
+};
+
+export const getSmartAccount = async (): Promise<{
+  eoaAddress: `0x${string}`;
+  smartAccount: MetaMaskSmartAccount;
+  walletClient: ReturnType<typeof createWalletClient>;
+}> => {
   const publicClient = createPublicClient({
     chain: baseSepolia,
     transport: http('https://sepolia.base.org'),
@@ -19,22 +34,25 @@ export const getSmartAccountAddressInSnap = async () => {
   const [eoaAddress] = await walletClient.requestAddresses();
 
   if (!eoaAddress) {
-    throw new Error('Gagal mendapatkan alamat EOA Signer.');
+    throw new Error('Failed to get EOA signer address.');
   }
 
-  const smartAccount = await toMetaMaskSmartAccount({
+  const smartAccount = (await toMetaMaskSmartAccount({
     client: publicClient,
     implementation: Implementation.Hybrid,
     deployParams: [eoaAddress, [], [], []],
     deploySalt:
-      '0x0000000000000000000000000000000000000000000000000000000000000887', // We ensure that newly created Smart Acc is Fresh and we can make sure to compatible with Metamask Delegation Framework
+      '0x0000000000000000000000000000000000000000000000000000000000000887',
     signer: { walletClient },
-  });
+  })) as MetaMaskSmartAccount;
 
-  const smartAccountAddress = smartAccount.address;
+  return { eoaAddress, smartAccount, walletClient };
+};
 
+export const getSmartAccountAddressInSnap = async () => {
+  const { eoaAddress, smartAccount } = await getSmartAccount();
   return {
     userAddress: eoaAddress,
-    smartAccountAddress: smartAccountAddress,
+    smartAccountAddress: smartAccount.address,
   };
 };

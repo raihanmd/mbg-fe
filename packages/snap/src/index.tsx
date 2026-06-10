@@ -28,6 +28,8 @@ import { handlePrepareInstallation } from './handler/prepareInstallation';
 import { handleExecutionHistory } from './handler/executionHistory';
 import { getSmartAccountAddressInSnap } from './utils/smartAccount';
 import { getUsdcBalance } from './utils/getUsdcBalance';
+import { checkDeployed } from './utils/deployment';
+import { handleDeploySmartAccount } from './handler/deploySmartAccount';
 import {
   formatTokenAmount,
   formatDate,
@@ -38,9 +40,10 @@ import {
 async function buildHomeContent() {
   const { userAddress, smartAccountAddress } =
     await getSmartAccountAddressInSnap();
-  const [skills, installations] = await Promise.all([
+  const [skills, installations, isDeployed] = await Promise.all([
     getAllSkills(),
     getAllInstalledSkills(userAddress),
+    checkDeployed(smartAccountAddress),
   ]);
 
   const skillNameMap = new Map(
@@ -58,6 +61,31 @@ async function buildHomeContent() {
   return (
     <Box>
       <Heading>DCA Skill Wallet</Heading>
+
+      {isDeployed ? (
+        <Section>
+          <Row label="Smart Account">
+            <Text>✅ Deployed</Text>
+          </Row>
+        </Section>
+      ) : (
+        <Box>
+          <Section>
+            <Row label="Smart Account">
+              <Text color="error">
+                <Bold>⚠ Not Deployed</Bold>
+              </Text>
+            </Row>
+            <Text>
+              Your smart account must be deployed before installing skills.
+            </Text>
+            <Button name="nav:deploy-account" variant="primary">
+              Deploy Now
+            </Button>
+          </Section>
+          <Divider />
+        </Box>
+      )}
 
       <Text>Installed Skills</Text>
       <Divider />
@@ -202,6 +230,10 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
   try {
     if (event.type === UserInputEventType.ButtonClickEvent) {
       if (!event.name) return;
+      if (event.name === 'nav:deploy-account') {
+        await handleDeploySmartAccount({ id });
+        return;
+      }
       if (event.name.startsWith('nav:history:')) {
         const installationId = event.name.split(':')[2];
         await handleExecutionHistory({ id, installationId });
