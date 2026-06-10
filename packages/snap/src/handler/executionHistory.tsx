@@ -121,7 +121,7 @@ export const handleExecutionHistory = async ({
             ) : (
               <Box>
                 <Text>
-                  <Bold>Executions ({executions.length})</Bold>
+                  <Bold>{`Executions (${executions.length})`}</Bold>
                 </Text>
                 {executions
                   .slice()
