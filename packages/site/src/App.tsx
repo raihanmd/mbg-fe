@@ -1,11 +1,11 @@
-import type { FunctionComponent, ReactNode } from 'react';
-import { useContext } from 'react';
-import styled from 'styled-components';
+import type { FunctionComponent, ReactNode } from "react";
+import { useContext } from "react";
+import styled from "styled-components";
 
-import './styles/design-tokens.css';
-import { GlobalStyle } from './config/theme';
-import { ToggleThemeContext } from './Root';
-import { Footer, Header } from './components';
+import "./styles/design-tokens.css";
+import { GlobalStyle } from "./config/theme";
+import { ToggleThemeContext } from "./Root";
+import { Footer, Header } from "./components";
 
 const Wrapper = styled.div`
   display: flex;
@@ -26,7 +26,7 @@ export const App: FunctionComponent<AppProps> = ({ children }) => {
     <>
       <GlobalStyle />
       <Wrapper>
-        <Header handleToggleClick={toggleTheme} />
+        <Header />
         {children}
         <Footer />
       </Wrapper>

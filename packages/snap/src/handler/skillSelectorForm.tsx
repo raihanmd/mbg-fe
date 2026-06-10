@@ -139,9 +139,7 @@ const handleSkillSelectorFormSubmit = async ({
                 <Row label="AI Provider">
                   <Text>{selectedSkill.aiConfig.provider}</Text>
                 </Row>
-                <Text>
-                  Uses AI for pre-execution analysis before each run.
-                </Text>
+                <Text>Uses AI for pre-execution analysis before each run.</Text>
               </Section>
             )}
 
@@ -176,14 +174,9 @@ const handleSkillSelectorFormSubmit = async ({
                               desc = `${opt.value.toUpperCase()} Token`;
                             }
                             return (
-                              <SelectorOption
-                                key={opt.value}
-                                value={opt.value}
-                              >
+                              <SelectorOption key={opt.value} value={opt.value}>
                                 <Card
-                                  title={
-                                    opt.label || opt.value.toUpperCase()
-                                  }
+                                  title={opt.label || opt.value.toUpperCase()}
                                   value={desc}
                                 />
                               </SelectorOption>
@@ -204,7 +197,6 @@ const handleSkillSelectorFormSubmit = async ({
                           name={paramName}
                           type="number"
                           min={param.min ?? 0}
-                          max={param.max}
                           step={param.integer ? 1 : undefined}
                           placeholder={param.defaultValue?.toString()}
                         />
@@ -294,22 +286,13 @@ const handleSkillSelectorFormSubmit = async ({
                           value={defaultUnit}
                         >
                           <SelectorOption value="hours">
-                            <Card
-                              title="Hours"
-                              value="Run every N hours"
-                            />
+                            <Card title="Hours" value="Run every N hours" />
                           </SelectorOption>
                           <SelectorOption value="days">
-                            <Card
-                              title="Days"
-                              value="Run every N days"
-                            />
+                            <Card title="Days" value="Run every N days" />
                           </SelectorOption>
                           <SelectorOption value="weeks">
-                            <Card
-                              title="Weeks"
-                              value="Run every N weeks"
-                            />
+                            <Card title="Weeks" value="Run every N weeks" />
                           </SelectorOption>
                         </Selector>
                       </Field>
@@ -346,9 +329,7 @@ const handleSkillSelectorFormSubmit = async ({
                     ))}
                     {meta.contractUrl && (
                       <Row label="Explorer">
-                        <Link href={meta.contractUrl}>
-                          View on BaseScan
-                        </Link>
+                        <Link href={meta.contractUrl}>View on BaseScan</Link>
                       </Row>
                     )}
                     {meta.target && (
@@ -360,8 +341,7 @@ const handleSkillSelectorFormSubmit = async ({
                 ))
               : (selectedSkill.delegationScope?.selectors || []).map(
                   (selector: string) => {
-                    const functionName =
-                      selector.split("(")[0] || selector;
+                    const functionName = selector.split("(")[0] || selector;
                     return (
                       <Row key={selector} label="Allowed Method">
                         <Text>

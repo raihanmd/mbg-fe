@@ -1,105 +1,59 @@
-# MetaMask Snap DCA Skills
+# MetaMask Based Gigs (MBG)
 
-This project is a MetaMask Snap that adds a skill-based wallet experience for automated investing strategies.
+A MetaMask Snap enabling users to install and execute AI-powered DCA (Dollar-Cost Averaging) skills for automated trading.
+## Description
 
-The main idea is simple:
+MBG allows users to configure and execute DCA strategies using AI-driven skills. The available skills include:
+- **Generic DCA**: Fixed USDC swaps into selected tokens at 9 AM daily.
+- **AI-Powered DCA**: Optimized swaps using AI market analysis.
+- **USDC Inbound DCA**: Swaps triggered by USDC incoming transfers.
 
-- Users open a wallet flow like `DCA BTC`, `DCA ETH`, or other assets.
-- They choose a schedule such as `1 week`, `1 month`, or another interval.
-- An AI layer reasons about the strategy and helps determine the best execution timing.
-- The snap coordinates the user experience and passes the chosen skill to the smart account flow.
+## Features
+- Configure daily USDC spend limits.
+- Choose output tokens: WETH or cbBTC.
+- Set fixed amounts or percentage-based spending.
+- AI-driven execution for optimized trades.
 
-This is meant to evolve into a MetaMask-native skill marketplace where users can install automated strategies such as:
+## Installation
+1. Install MetaMask.
+2. Install the MBG Snap from the MetaMask store.
+3. Configure your DCA skills through MetaMask.
 
-- Dollar-cost averaging for BTC, ETH, and other tokens
-- Voting or governance automation such as veAERO voting
-- Other on-chain actions that can run with explicit, auditable, and revocable permissions
+## Usage
+1. Open MetaMask and navigate to the MBG Snap.
+2. Select your desired DCA skill.
+3. Configure parameters:
+   - Output token (WETH or cbBTC).
+   - Amount of USDC to swap.
+   - Daily spend limit.
+   - Spend mode (fixed or percentage of inbound).
+4. Enable the skill for automatic execution.
 
-The backend is intended to be built with NestJS and expose the services needed to manage skills, strategy metadata, and permissioned execution.
+## Configuration
+### Environment Variables
+- `MM_API_KEY`: MetaMask API key (required for skill installation).
+- `DEFAULT_CHAIN_ID`: Default chain ID for executions (default: 84532).
+- `MAX_DAILY_SPEND`: Maximum allowed daily spend in USDC (default: 10000000).
 
-## What This Project Does
+### Skill Parameters
+- `outputToken`: Token to accumulate (WETH or cbBTC).
+- `amountUsdc`: Amount of USDC per run in base units.
+- `dailySpendLimit`: Maximum daily spend in USDC.
+- `spendMode`: Spend mode (fixed or percent-of-inbound).
+- `percentOfInboundBps`: Percent of inbound amount in basis points.
 
-- Provides a MetaMask Snap UI for strategy selection
-- Lets users configure DCA frequency and asset choice
-- Supports multiple assets, not just BTC
-- Uses AI reasoning to help decide when to buy based on the selected skill
-- Prepares the foundation for a marketplace of wallet skills
-
-## Example User Flow
-
-1. User opens the snap in MetaMask.
-2. User selects a skill like `DCA BTC` or `DCA ETH`.
-3. User chooses a cadence such as `1 week` or `1 month`.
-4. The AI layer evaluates the strategy and suggests an execution plan.
-5. The smart account executes the action under user-approved permissions.
-
-## Project Structure
-
-- `packages/snap`: MetaMask Snap implementation
-- `packages/site`: Front-end for interacting with the snap
-
-## Getting Started
-
-### Requirements
-
-- Node.js `>=18.6.0`
-- Yarn `3.2.1`
-- MetaMask Flask for local Snap development
-
-### Install Dependencies
-
-```shell
-yarn install
-```
-
-### Run the Project Locally
-
-Start the snap and the front-end together:
-
-```shell
-yarn start
-```
-
-If you want to run each package separately:
-
-```shell
-yarn workspace snap start
-yarn workspace site start
-```
-
-## How to Install the MetaMask Snap
-
-1. Install [MetaMask Flask](https://metamask.io/flask/) in your browser.
-2. Start the project locally with `yarn start`.
-3. Open the front-end at the local site URL shown in the terminal.
-4. Connect MetaMask Flask to the local site.
-5. Click the install or connect button for the snap.
-6. Approve the snap permissions in MetaMask Flask.
-7. The snap will then be available inside MetaMask for testing DCA skills.
-
-## How to Use the Custom Wallet Flow
-
-1. Open the wallet UI.
-2. Choose a skill such as `DCA BTC`, `DCA ETH`, or another supported asset.
-3. Pick the cadence, such as `1 week` or `1 month`.
-4. Confirm the strategy.
-5. The AI layer can reason about the best execution timing.
-6. The smart account executes according to the approved permissions.
-
-## Development Notes
-
-- This repository is for building and testing the snap experience locally.
-- MetaMask Flask is typically required for snap development.
-- The long-term architecture should keep user permissions explicit, auditable, and revocable.
-
-## Roadmap
-
-- DCA skill UI for BTC, ETH, and other assets
-- Schedule selection for weekly, monthly, and custom intervals
-- AI-assisted strategy reasoning
-- NestJS backend for skill orchestration
-- Skill marketplace support for additional automated wallet behaviors
+## Contributing
+1. Fork the repository.
+2. Create a new branch for your changes.
+3. Commit your changes.
+4. Push to the branch.
+5. Create a Pull Request.
 
 ## License
+[Your License Here]
 
-This project inherits the license of the repository template unless changed later.
+## Contact
+For questions or support, contact syafiqpinginfullstack@gmail.com.
+## Acknowledgments
+- MetaMask for the Snap platform.
+- AI and DeFi communities for inspiration
