@@ -1,11 +1,28 @@
-import { InstallationResponse } from 'src/types/installationResponse';
+import {
+  InstallationResponse,
+  InstallationItem,
+  InstallationExecution,
+} from '../types/installationResponse';
 import {
   PrepareInstallation,
   PrepareInstallationResponse,
-} from 'src/types/PrepareInstallation';
-
+} from '../types/PrepareInstallation';
 
 const API_URL = process.env.API_URL;
+
+async function handleResponse<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    let errorMessage = `Request failed with status ${response.status}`;
+    try {
+      const errorBody = await response.json();
+      errorMessage = errorBody?.message ?? errorBody?.error ?? errorMessage;
+    } catch (ignored) {
+      void ignored;
+    }
+    throw new Error(errorMessage);
+  }
+  return (await response.json()) as T;
+}
 
 export const prepareInstallation = async (
   body: PrepareInstallation,
@@ -18,9 +35,8 @@ export const prepareInstallation = async (
     body: JSON.stringify(body),
   });
 
-  return await response.json();
+  return handleResponse<PrepareInstallationResponse>(response);
 };
-
 
 export const confirmInstallation = async (
   body: PrepareInstallation,
@@ -33,12 +49,41 @@ export const confirmInstallation = async (
     body: JSON.stringify(body),
   });
 
-  return await response.json();
+  return handleResponse<PrepareInstallationResponse>(response);
 };
 
-export const getAllInstalledSkills = async (userAddress: string): Promise<InstallationResponse> => {
-  const response = await globalThis.fetch(`${API_URL}/installations?userAddress=${userAddress}`)
-
+export const getAllInstalledSkills = async (
+  userAddress: string,
+): Promise<InstallationResponse> => {
+  const response = await globalThis.fetch(
+    `${API_URL}/installations?userAddress=${userAddress}`,
+  );
   const data = (await response.json()) as InstallationResponse;
   return data;
-}
+};
+
+export const getInstallationById = async (
+  installationId: string,
+): Promise<InstallationItem> => {
+  const response = await globalThis.fetch(
+    `${API_URL}/installations/${installationId}`,
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to fetch installation: ${response.status}`);
+  }
+  const data = await response.json();
+  return (data.data ?? data) as InstallationItem;
+};
+
+export const getInstallationExecutions = async (
+  installationId: string,
+): Promise<{ data: InstallationExecution[] }> => {
+  const response = await globalThis.fetch(
+    `${API_URL}/installations/${installationId}/executions`,
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to fetch executions: ${response.status}`);
+  }
+  const data = await response.json();
+  return data as { data: InstallationExecution[] };
+};

@@ -1,4 +1,17 @@
-export type InstallationStatus = 'active' | 'revoked' | 'pending' | 'failed';
+export type InstallationStatus =
+  | 'active'
+  | 'paused'
+  | 'revoked'
+  | 'pending'
+  | 'failed';
+
+export type ExecutionStatus =
+  | 'pending'
+  | 'submitted'
+  | 'confirmed'
+  | 'success'
+  | 'failed'
+  | 'skipped';
 
 export type SkillId = {
   _id: string;
@@ -27,27 +40,23 @@ export type SignedDelegation = {
 export type InstallationExecution = {
   executionId: string;
   executedAt: string;
-  status: 'failed' | 'success' | 'pending' | 'skipped';
+  status: ExecutionStatus;
   trigger: unknown | null;
   spend: unknown | null;
-  aiContext: string;
-  newsContext: string;
-  oneShotTaskId: string;
+  aiContext?: string;
+  newsContext?: string;
+  skippedReason?: string;
+  oneShotTaskId?: string;
+  txHash?: string;
   completedAt: string | null;
   errorMessage: string | null;
 };
 
-export type InstallationParameters = {
-  outputToken: string;
-  amountUsdc?: string;
-  spendMode?: string;
-  amountPerRun?: string;
-  percentOfInboundBps?: number;
-  dailySpendLimit?: string;
-};
+export type InstallationParameters = Record<string, unknown>;
 
 export type InstallationItem = {
   _id: string;
+  installationId?: string;
   userAddress: string;
   smartAccountAddress: string;
   skillId: SkillId;

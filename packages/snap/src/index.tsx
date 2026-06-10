@@ -2,12 +2,6 @@ import {
   OnHomePageHandler,
   OnUserInputHandler,
   UserInputEventType,
-  type OnRpcRequestHandler,
-  OnInstallHandler,
-  OnUpdateHandler,
-  OnActiveHandler,
-  OnStartHandler,
-  OnInactiveHandler,
   OnSignatureHandler,
 } from '@metamask/snaps-sdk';
 import {
@@ -22,177 +16,286 @@ import {
   Divider,
   Form,
   Row,
+  Section,
+  Address,
+  Copyable,
 } from '@metamask/snaps-sdk/jsx';
 import { getAllSkills } from './api/skills';
 import { getAllInstalledSkills } from './api/installations';
 import handleSkillSelectorFormSubmit from './handler/skillSelectorForm';
 import { handleConfirmInstallation } from './handler/confirmInstallation';
 import { handlePrepareInstallation } from './handler/prepareInstallation';
+import { handleExecutionHistory } from './handler/executionHistory';
 import { getSmartAccountAddressInSnap } from './utils/smartAccount';
 import { getUsdcBalance } from './utils/getUsdcBalance';
-/**
- * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
- *
- * @param args - The request handler args as object.
- * @param args.origin - The origin of the request, e.g., the website that
- * invoked the snap.
- * @param args.request - A validated JSON-RPC request object.
- * @returns The result of `snap_dialog`.
- * @throws If the request method is not valid for this snap.
- */
-export const onHomePage: OnHomePageHandler = async () => {
-  const { userAddress } = await getSmartAccountAddressInSnap();
-  const [skill, installations] = await Promise.all([
+import { checkDeployed } from './utils/deployment';
+import { handleDeploySmartAccount } from './handler/deploySmartAccount';
+import {
+  formatTokenAmount,
+  formatDate,
+  formatExecutionStatus,
+  statusEmoji,
+} from './utils/format';
+
+async function buildHomeContent() {
+  const { userAddress, smartAccountAddress } =
+    await getSmartAccountAddressInSnap();
+  const [skills, installations, isDeployed] = await Promise.all([
     getAllSkills(),
     getAllInstalledSkills(userAddress),
+    checkDeployed(smartAccountAddress),
   ]);
-  
-const formatSnapshotDate = (dateString: string | null | undefined) => {
-  if (!dateString || dateString === 'N/A') return 'N/A';
-  try {
-    const date = new Date(dateString);
-    return `${date.toLocaleDateString('id-ID')} ${date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
-  } catch {
-    return 'Invalid Date';
-  }
-};
-  return {
-    content: (
-      <Box>
-        <Heading>DCA Skill Wallet</Heading>
-        <Text>Installed skills</Text>
-        <Divider />
+
+  const skillNameMap = new Map(
+    skills.map((s) => [s.skillId, s.name]),
+  );
+
+  const activeInstallations = installations.data.filter(
+    (item) =>
+      item.status === 'active' ||
+      item.status === 'paused' ||
+      item.status === 'pending' ||
+      item.status === 'failed',
+  );
+
+  return (
+    <Box>
+      <Heading>DCA Skill Wallet</Heading>
+
+      {isDeployed ? (
+        <Section>
+          <Row label="Smart Account">
+            <Text>✅ Deployed</Text>
+          </Row>
+        </Section>
+      ) : (
         <Box>
-          {installations.data
-            .filter((item) => item.status === 'active').slice(0, 4)
-            .map((item) => {
-              // --- PROSES KONVERSI DATA DISINI ---
-              const rawAmount =
-                item.parameters?.amountUsdc ?? item.parameters?.amountPerRun;
-              const humanAmount = rawAmount
-                ? (Number(rawAmount) / 1_000_000).toFixed(2)
-                : 'N/A';
-              const tokenTarget =
-                item.parameters?.outputToken?.toUpperCase() ?? 'N/A';
-
-              const nextRun = formatSnapshotDate(item.nextExecutionAt);
-              const lastRun = formatSnapshotDate(item.lastExecutedAt);
-
-              return (
-                <Box key={item._id}>
-                  <Row label="Strategy">
-                    <Text>
-                      <Bold>{item.skillId?.name}</Bold>
-                    </Text>
-                  </Row>
-                  <Row label="Network">
-                    <Text>
-                      {item.chainId === 84532
-                        ? 'Base Sepolia'
-                        : String(item.chainId)}
-                    </Text>
-                  </Row>
-                  <Row label="DCA Pair">
-                    <Text>
-                      {humanAmount} USDC → {tokenTarget}
-                    </Text>
-                  </Row>
-                  <Row label="Next Run">
-                    <Text>{nextRun}</Text>
-                  </Row>
-                  <Row label="Last Run">
-                    <Text>{lastRun}</Text>
-                  </Row>
-                  <Divider />
-                </Box>
-              );
-            })}
+          <Section>
+            <Row label="Smart Account">
+              <Text color="error">
+                <Bold>⚠ Not Deployed</Bold>
+              </Text>
+            </Row>
+            <Text>
+              Your smart account must be deployed before installing skills.
+            </Text>
+            <Button name="nav:deploy-account" variant="primary">
+              Deploy Now
+            </Button>
+          </Section>
+          <Divider />
         </Box>
-        <Divider />
-        <Form name="skill-selector-form">
-          <Text>Install a new skill</Text>
-          <Selector
-            name="skill-selector"
-            title="Choose Skill"
-            value={skill[0]?._id}
-          >
-            {skill.map((item) => (
-              <SelectorOption key={item._id} value={item._id}>
-                <Card
-                  value={item.name}
-                  title={item.name}
-                  image={item.iconUrl}
-                />
-              </SelectorOption>
-            ))}
-          </Selector>
+      )}
 
-          <Button name="submit-dca" type="submit" variant="primary" size="md">
-            Install Skill
-          </Button>
-        </Form>
-      </Box>
-    ),
-  };
+      <Text>Installed Skills</Text>
+      <Divider />
+
+      {activeInstallations.length === 0 ? (
+        <Text>
+          No skills installed yet. Choose one below to get started.
+        </Text>
+      ) : (
+        activeInstallations.slice(0, 10).map((item) => {
+          const rawAmount =
+            item.parameters?.amountUsdc ??
+            item.parameters?.amountPerRun;
+          const humanAmount = rawAmount
+            ? formatTokenAmount(rawAmount as string)
+            : 'N/A';
+          const tokenTarget = item.parameters?.outputToken
+            ? (item.parameters.outputToken as string).toUpperCase()
+            : 'N/A';
+          const skillName =
+            skillNameMap.get(item.skillId?.skillId ?? '') ??
+            item.skillId?.name ??
+            'Unknown';
+          const nextRun = formatDate(item.nextExecutionAt);
+          const networkName =
+            item.chainId === 84532
+              ? 'Base Sepolia'
+              : `Chain ${item.chainId}`;
+
+          return (
+            <Box key={item._id}>
+              <Section>
+                <Row label="Strategy">
+                  <Text>
+                    <Bold>{skillName}</Bold>
+                  </Text>
+                </Row>
+                <Row label="Network">
+                  <Text>{networkName}</Text>
+                </Row>
+                <Row label="DCA">
+                  <Text>
+                    {humanAmount} USDC → {tokenTarget}
+                  </Text>
+                </Row>
+                <Row label="Next Run">
+                  <Text>{nextRun}</Text>
+                </Row>
+                <Row label="Status">
+                  <Text>
+                    {statusEmoji(item.status)}{' '}
+                    {formatExecutionStatus(item.status)}
+                  </Text>
+                </Row>
+              </Section>
+              <Button
+                name={`nav:history:${item._id}`}
+                variant="primary"
+                size="md"
+              >
+                View History
+              </Button>
+              <Divider />
+            </Box>
+          );
+        })
+      )}
+
+      <Divider />
+      <Text>Available Skills</Text>
+
+      <Form name="skill-selector-form">
+        <Selector
+          name="skill-selector"
+          title="Choose Skill"
+          value={skills[0]?._id}
+        >
+          {skills.map((skill) => (
+            <SelectorOption key={skill._id} value={skill._id}>
+              <Card
+                value={skill.name}
+                title={skill.name}
+                image={skill.iconUrl}
+              />
+            </SelectorOption>
+          ))}
+        </Selector>
+
+        <Button
+          name="submit-dca"
+          type="submit"
+          variant="primary"
+          size="md"
+        >
+          Install Skill
+        </Button>
+      </Form>
+
+      <Divider />
+      <Section>
+        <Row label="Smart Account">
+          <Address address={smartAccountAddress} />
+        </Row>
+        <Copyable value={smartAccountAddress} />
+      </Section>
+    </Box>
+  );
+}
+
+async function renderHomePage(id: string) {
+  try {
+    const ui = await buildHomeContent();
+    await snap.request({
+      method: 'snap_updateInterface',
+      params: { id, ui },
+    });
+  } catch (error: any) {
+    await snap.request({
+      method: 'snap_updateInterface',
+      params: {
+        id,
+        ui: (
+          <Box>
+            <Heading>Error</Heading>
+            <Text>
+              {error?.message ??
+                'Something went wrong loading the home page.'}
+            </Text>
+          </Box>
+        ),
+      },
+    });
+  }
+}
+
+export const onHomePage: OnHomePageHandler = async () => {
+  const ui = await buildHomeContent();
+  return { content: ui };
 };
 
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
   try {
-    // 1. HANDLE UNTUK SELECTOR FORM (PILIH SKILL)
-    if (
-      event.type === UserInputEventType.FormSubmitEvent &&
-      event.name === 'skill-selector-form'
-    ) {
-      // Ambil saldo hanya saat form ini disubmit
-      const { smartAccountAddress } = await getSmartAccountAddressInSnap();
-      const usdcRawBalance = await getUsdcBalance(smartAccountAddress, 84532);
-
-      await handleSkillSelectorFormSubmit({ id, event, usdcRawBalance });
-      return; 
-    }
-
-    // 2. HANDLE UNTUK TOMBOL CONFIRM INSTALLATION
-    if (
-      event.type === UserInputEventType.FormSubmitEvent &&
-      event.name.startsWith('prepare-installation-form')
-    ) {
-      // Ambil data address hanya saat user klik tombol confirm
-      const { userAddress, smartAccountAddress } =
-        await getSmartAccountAddressInSnap();
-
-      const eventNameParts = event.name.split(':');
-      const extractedSkillId = eventNameParts[1];
-      const extractedRunType = eventNameParts[2];
-      await handlePrepareInstallation({
-        id,
-        event,
-        selectedSkillId: extractedSkillId!,
-        extractedRunType: extractedRunType!,
-        userAddress,
-        smartAccountAddress,
-      });
+    if (event.type === UserInputEventType.ButtonClickEvent) {
+      if (!event.name) return;
+      if (event.name === 'nav:deploy-account') {
+        await handleDeploySmartAccount({ id });
+        return;
+      }
+      if (event.name.startsWith('nav:history:')) {
+        const installationId = event.name.split(':')[2];
+        await handleExecutionHistory({ id, installationId });
+        return;
+      }
+      if (event.name === 'nav:home') {
+        await renderHomePage(id);
+        return;
+      }
       return;
     }
-    if (
-      event.type === UserInputEventType.FormSubmitEvent &&
-      event.name.startsWith('sign-delegation-form')
-    ) {
-      const eventNameParts = event.name.split(':');
-      const extractedSkillId = eventNameParts[1];
 
-      const { userAddress, smartAccountAddress } =
-        await getSmartAccountAddressInSnap();
+    if (event.type === UserInputEventType.FormSubmitEvent) {
+      if (!event.name) return;
 
-      // 1. Ambil data dari secure Snap state storage
-      await handleConfirmInstallation({
-        id,
-        event,
-        skillId: extractedSkillId!,
-        userAddress,
-        smartAccountAddress,
-      });
+      if (event.name === 'skill-selector-form') {
+        const { smartAccountAddress } =
+          await getSmartAccountAddressInSnap();
+        const usdcRawBalance = await getUsdcBalance(
+          smartAccountAddress,
+          84532,
+        );
+        await handleSkillSelectorFormSubmit({
+          id,
+          event,
+          usdcRawBalance,
+          smartAccountAddress,
+        });
+        return;
+      }
 
-      return;
+      if (event.name.startsWith('prepare-installation-form')) {
+        const { userAddress, smartAccountAddress } =
+          await getSmartAccountAddressInSnap();
+        const eventNameParts = event.name.split(':');
+        const extractedSkillId = eventNameParts[1];
+        const extractedRunType = eventNameParts[2];
+        await handlePrepareInstallation({
+          id,
+          event,
+          selectedSkillId: extractedSkillId!,
+          extractedRunType: extractedRunType!,
+          userAddress,
+          smartAccountAddress,
+        });
+        return;
+      }
+
+      if (event.name.startsWith('sign-delegation-form')) {
+        const eventNameParts = event.name.split(':');
+        const extractedSkillId = eventNameParts[1];
+        const { userAddress, smartAccountAddress } =
+          await getSmartAccountAddressInSnap();
+        await handleConfirmInstallation({
+          id,
+          event,
+          skillId: extractedSkillId!,
+          userAddress,
+          smartAccountAddress,
+        });
+        return;
+      }
     }
   } catch (error: any) {
     console.error('Error in onUserInput:', error);
@@ -202,11 +305,12 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         id,
         ui: (
           <Box>
+            <Heading>Error</Heading>
             <Text>
-              Error:{' '}
               {error.message ||
-                'Something went wrong when controlling your DCA Skill'}
+                'Something went wrong. Please try again.'}
             </Text>
+            <Button name="nav:home">Back to Home</Button>
           </Box>
         ),
       },
@@ -216,9 +320,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
 
 export const onSignature: OnSignatureHandler = async ({
   signature,
-    signatureOrigin,
+  signatureOrigin,
 }) => {
-  // Returning null tells MetaMask that this Snap has no objections
-  // and provides no extra UI insights for this signature.
   return null;
 };

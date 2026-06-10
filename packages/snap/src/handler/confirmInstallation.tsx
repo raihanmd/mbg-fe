@@ -15,11 +15,10 @@ export const handleConfirmInstallation = async ({
   smartAccountAddress: string;
 }) => {
   
-  const state = (await snap.request({
+    const state = (await snap.request({
       method: 'snap_manageState',
       params: { operation: 'get' },
     })) as any;
-    const currentInterfaceId: string = event.context || id;
     const { resp, parameters } = state?.pendingInstallation || {};
     if (!resp || !resp.delegation) {
       throw new Error(

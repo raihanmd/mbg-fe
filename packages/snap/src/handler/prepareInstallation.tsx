@@ -1,4 +1,5 @@
 import { prepareInstallation } from '../api/installations';
+import { frequencyToCron } from '../utils/format';
 import {
   Box,
   Button,
@@ -8,83 +9,74 @@ import {
   Bold,
   Heading,
   Text,
+  Section,
+  Address,
+  Copyable,
 } from '@metamask/snaps-sdk/jsx';
-import { parseUnits } from 'viem';
 
 export const handlePrepareInstallation = async ({
   id,
   event,
   selectedSkillId,
-  extractedRunType,
   userAddress,
   smartAccountAddress,
 }: {
   id: string;
   event: any;
   selectedSkillId: string;
-  extractedRunType: string;
   userAddress: string;
   smartAccountAddress: string;
 }) => {
   try {
     const formVals = event.value as Record<string, any>;
-    const rawOutputToken = formVals?.['param-output-token'];
-    const rawAmountUsdc = formVals?.['param-amount-usdc'];
-    const rawSpendMode = formVals?.['param-spend-mode'];
-    const rawAllocation = formVals?.['param-allocation'];
-    const rawDailyLimit = formVals?.['param-daily-limit'];
-
-    const validateNumberInput = (value: any, fieldName: string) => {
-      if (value !== undefined && value !== null && value !== '') {
-        const parsed = Number(value);
-        if (isNaN(parsed) || parsed <= 0) {
-          throw new Error(
-            `Input tidak valid! Kolom [${fieldName}] harus berupa angka positif dan tidak boleh mengandung huruf.`,
-          );
-        }
-      }
-    };
-    validateNumberInput(rawAmountUsdc, 'Amount USDC');
-    validateNumberInput(rawAllocation, 'Allocation');
-    validateNumberInput(rawDailyLimit, 'Daily Spend Limit');
     console.log(formVals);
-    let params: Record<string, any> = {};
-    if (extractedRunType == 'cron') {
-      params.outputToken = formVals?.['param-output-token'];
-      if (rawAmountUsdc) {
-        params.amountUsdc = parseUnits(rawAmountUsdc, 6).toString();
-      }
-    }
-    if (extractedRunType == 'event-trigger') {
-      params.outputToken = rawOutputToken;
-      params.spendMode = rawSpendMode;
-     if (rawAllocation) {
-       if (rawSpendMode === 'fixed') {
-         params.amountPerRun = parseUnits(rawAllocation, 6).toString();
-       }
-       if (
-         rawSpendMode === 'percent-of-inbound'
-       ) {
-         params.percentOfInboundBps = Math.round(
-           Number(rawAllocation) * 100,
-         ).toString();
-       }
-     }
 
-      if (rawDailyLimit) {
-        params.dailySpendLimit = parseUnits(rawDailyLimit, 6).toString();
+    const params: Record<string, any> = {};
+
+    for (const [key, value] of Object.entries(formVals ?? {})) {
+      if (key.startsWith('param-')) {
+        const paramKey = key.slice(6);
+        params[paramKey] = value;
       }
     }
+
+    const freqParamKeys = Object.keys(params).filter((k) =>
+      k.endsWith('_freqNum'),
+    );
+    for (const freqKey of freqParamKeys) {
+      const targetKey = freqKey.slice(0, -8);
+      const num = parseInt(params[freqKey], 10);
+      const unit = params[`${targetKey}_freqUnit`] as
+        | 'hours'
+        | 'days'
+        | 'weeks'
+        | undefined;
+      if (num > 0 && unit) {
+        params[targetKey] = frequencyToCron(num, unit);
+      }
+      delete params[freqKey];
+      delete params[`${targetKey}_freqUnit`];
+    }
+
+    console.log('Form values:', JSON.stringify(formVals));
+    console.log('Extracted params:', JSON.stringify(params));
+
+    const parametersArray = Object.entries(params).map(([key, value]) => ({
+      key,
+      value,
+    }));
 
     const body = {
       skillId: selectedSkillId,
       userAddress: userAddress,
       smartAccountAddress: smartAccountAddress,
-      parameters: params,
+      parameters: parametersArray as any,
     };
 
+    console.log('Request body:', JSON.stringify(body));
+
     const resp = await prepareInstallation(body);
-    console.log('prepareInstallation response:', resp);
+    console.log('prepareInstallation response:', JSON.stringify(resp));
     await snap.request({
       method: 'snap_manageState',
       params: {
@@ -109,37 +101,28 @@ export const handlePrepareInstallation = async ({
               automation delegation rules below before activation:
             </Text>
             <Divider />
-            {/* DETAIL DELEGASI MENGGUNAKAN ROW AGAR RAPI KIRI-KANAN */}
-            <Box>
+            <Section>
               <Row label="Smart Account">
-                <Text>
-                  <Bold>
-                    {`${resp.delegation.delegator.slice(0, 6)}...${resp.delegation.delegator.slice(-4)}`}
-                  </Bold>
-                </Text>
+                <Address address={resp.delegation.delegator} />
               </Row>
-
+              <Copyable value={resp.delegation.delegator} />
               <Row label="Bot Executor">
-                <Text>
-                  {`${resp.executorAddress.slice(0, 6)}...${resp.executorAddress.slice(-4)}`}
-                </Text>
+                <Address address={resp.executorAddress} />
               </Row>
-
+              <Copyable value={resp.executorAddress} />
               <Row label="Network">
                 <Text>
                   <Bold>Base Sepolia</Bold> ({resp.chainId.toString()})
                 </Text>
               </Row>
-
               <Row label="Security Constraints">
                 <Text>
                   <Bold>{resp.delegation.caveats.length.toString()}</Bold>{' '}
                   Active Rules
                 </Text>
               </Row>
-            </Box>
+            </Section>
             <Divider />
-            {/* INFORMASI NOTICE DIBUAT AGAR LEBIH MENCOLOK */}
             <Text>
               <Bold>Notice:</Bold> Clicking the button below will prompt a
               secure cryptographic signature request. This authorization is{' '}
@@ -155,17 +138,15 @@ export const handlePrepareInstallation = async ({
         ),
       },
     });
-  } catch (e: any) {
+    } catch (e: any) {
     console.error('prepareInstallation error', e);
     const status = e?.response?.status;
     let errorMsg = '';
     if (status === 409) {
-      // Conflict: skill already installed
       errorMsg = e?.response?.data?.message ?? 'Skill already installed.';
     } else {
       errorMsg = e?.response?.data?.message ?? e?.message ?? 'Unexpected error';
     }
-    // Show error UI to the user
     await snap.request({
       method: 'snap_updateInterface',
       params: {
@@ -173,7 +154,8 @@ export const handlePrepareInstallation = async ({
         ui: (
           <Box>
             <Heading>Installation Error</Heading>
-            <Text>{errorMsg}</Text>
+            <Text color="error">{errorMsg}</Text>
+            <Button name="nav:home">Back to Home</Button>
           </Box>
         ),
       },

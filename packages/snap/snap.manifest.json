@@ -1,13 +1,13 @@
 {
   "version": "0.1.0",
-  "description": "DCA Skill Wallet Allows AI to Execute DCA Strategy.",
-  "proposedName": "DCA Skill Wallet",
+  "description": "Metamask-Based Gigs — AI-powered automated on-chain skill execution.",
+  "proposedName": "(MBG) Metamask-Based Gigs",
   "repository": {
     "type": "git",
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "ixsl9YMSnTAUQPL7Qvjjg/7mnNTROiLjiHAaJ26Ju90=",
+    "shasum": "DL86ANJO1DaFgEQU0EaKjBARn37P890d9xrSpyyBVj8=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -19,11 +19,6 @@
   "initialPermissions": {
     "endowment:network-access": {},
     "endowment:page-home": {},
-    "endowment:lifecycle-hooks": {},
-    "endowment:rpc": {
-      "dapps": true,
-      "snaps": false
-    },
     "endowment:signature-insight": {
       "allowSignatureOrigin": true
     },

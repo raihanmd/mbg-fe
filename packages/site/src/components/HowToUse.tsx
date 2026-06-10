@@ -1,76 +1,114 @@
 import React from 'react';
 
-const steps = [
+import { defaultSnapOrigin } from '../config';
+import { useMetaMask, useRequestSnap } from '../hooks';
+import { isLocalSnap } from '../utils';
+
+const cards = [
   {
-    number: '1',
-		title: 'Connect Wallet',
-	description: 'Connect Skill Wallet through metamask snap'
+    title: 'Step 1',
+    description: 'Install the MBG Snap from your MetaMask browser extension.',
+    visual: 'install',
   },
   {
-    number: '2',
-    title: 'Choose a Skill',
-    description: 'Select an automated strategy such as DCA BTC, DCA ETH, or another supported asset.'
+    title: 'Step 2',
+    description: 'Choose AI-Powered DCA, Custom Cron DCA, or USDC Inbound DCA.',
+    visual: 'config',
   },
   {
-    number: '3',
-    title: 'Pick the Cadence',
-    description: 'Set your preferred investment frequency, such as 1 week or 1 month.'
+    title: 'Step 3',
+    description: 'Your plan is active and the agent executes inside your approved scope.',
+    visual: 'active',
   },
-  {
-    number: '4',
-    title: 'Confirm Strategy',
-    description: 'Review the parameters and confirm the strategy deployment.'
-  },
-  {
-    number: '5',
-    title: 'AI Reasoning',
-    description: 'The AI layer analyzes market conditions to determine the optimal execution timing.'
-  },
-  {
-    number: '6',
-    title: 'Smart Execution',
-    description: 'The smart account seamlessly executes the trade according to your approved permissions.'
-  }
 ];
 
 const HowToUse = () => {
+  const { isFlask, snapsDetected, installedSnap } = useMetaMask();
+  const requestSnap = useRequestSnap();
+  const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
+    ? isFlask
+    : snapsDetected;
+
   return (
-    <section className="w-full py-24 px-6 bg-[#0a192f] border-t border-b border-white/5 relative overflow-hidden">
-      {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[150px] opacity-10 pointer-events-none"></div>
-      
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-16 space-y-4">
-          <div className="inline-block px-4 py-1.5 rounded-full bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-[var(--color-primary-light)] font-semibold text-sm tracking-wider uppercase mb-2">
-            Workflow
-          </div>
-          <h2 className=" font-bold text-white">How It Works</h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Set up your automated Dollar Cost Averaging in six simple steps.
+    <section id="how-to-use" className="relative overflow-hidden bg-black px-6 py-24 text-white sm:px-10 lg:px-16">
+      <div className="absolute left-1/2 top-24 h-96 w-96 -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
+      <div className="relative mx-auto max-w-7xl">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-400">
+            ● How to install
+          </p>
+          <h2 className="mt-4 text-5xl font-black leading-[0.92] tracking-tight sm:text-7xl">
+            Installs in
+            <span className="block bg-gradient-to-r from-cyan-100 via-emerald-200 to-cyan-300 bg-clip-text text-transparent">
+              seconds ↓
+            </span>
+          </h2>
+          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-slate-400 sm:text-lg">
+            No more manual reminders. Add the Snap, select a DCA skill, and let your approved AI agent execute USDC plans automatically.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {steps.map((step, index) => (
-            <div 
-              key={index}
-              className="group relative p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md hover:bg-white/10 transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-[0_10px_40px_-10px_rgba(0,200,83,0.3)] overflow-hidden"
+        <div className="mt-16 grid gap-5 lg:grid-cols-3">
+          {cards.map((card) => (
+            <article
+              key={card.title}
+              className="group relative min-h-[360px] overflow-hidden rounded-2xl border border-white/15 bg-white/[0.02] p-8 text-center shadow-2xl shadow-black/30 transition hover:-translate-y-1 hover:border-emerald-300/50"
             >
-              {/* Large background number */}
-              <div className="absolute -top-6 -right-4 text-9xl font-black text-white/5 group-hover:text-[var(--color-primary)]/10 transition-colors duration-300 pointer-events-none">
-                {step.number}
-              </div>
-              
+              <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-emerald-500/20 via-cyan-400/5 to-transparent opacity-80" />
+              <div className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400/10 blur-3xl" />
+
               <div className="relative z-10">
-                <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-[var(--color-primary)]/20 text-[var(--color-primary-light)] font-bold text-xl mb-6 group-hover:bg-[var(--color-primary)] group-hover:text-black transition-colors duration-300">
-                  {step.number}
-                </div>
-					  <h6 className="text-sm font-bold text-white mb-3" style={{fontSize: "40px"}}>{step.title}</h6>
-                <p className="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
-                  {step.description}
+                <h3 className="text-4xl font-black tracking-tight">{card.title}</h3>
+                <p className="mx-auto mt-4 max-w-[15rem] text-sm leading-6 text-slate-400">
+                  {card.description}
                 </p>
               </div>
-            </div>
+
+              {card.visual === 'install' && (
+                <div className="relative z-10 mt-12 flex justify-center">
+                  <div className="relative grid h-28 w-56 place-items-center rounded-[50%] border border-emerald-300/60 bg-emerald-400/10 shadow-[0_0_55px_rgba(34,197,94,0.35)]">
+                    <button
+                      type="button"
+                      disabled={!isMetaMaskReady || Boolean(installedSnap)}
+                      onClick={requestSnap}
+                      className="rounded-full border border-emerald-200/60 bg-emerald-400 px-6 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(74,222,128,0.5)]"
+                    >
+                      {installedSnap ? 'Snap Installed' : 'Add to MetaMask'}
+                    </button>
+                    <span className="absolute -right-2 bottom-8 text-2xl">⌁</span>
+                  </div>
+                </div>
+              )}
+
+              {card.visual === 'config' && (
+                <div className="relative z-10 mx-auto mt-10 max-w-[15rem] rounded-xl border border-white/10 bg-white/[0.08] p-4 text-left backdrop-blur">
+                  <p className="text-base font-black leading-5 text-white">Configure your DCA skill</p>
+                  <div className="mt-4 h-1.5 rounded-full bg-white/10">
+                    <div className="h-full w-2/3 rounded-full bg-emerald-400" />
+                  </div>
+                  {['AI sentiment', 'Cron schedule', 'Daily spend limit', 'Execution scope'].map((item, index) => (
+                    <div key={item} className="mt-3 flex items-center justify-between text-xs text-slate-300">
+                      <span>{index + 1}. {item}</span>
+                      <span className="text-emerald-300">○</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {card.visual === 'active' && (
+                <div className="relative z-10 mt-12 flex flex-col items-center">
+                  <div className="relative h-32 w-56">
+                    <div className="absolute inset-x-4 bottom-0 h-28 rounded-t-full border-[10px] border-b-0 border-emerald-400 shadow-[0_0_45px_rgba(34,197,94,0.45)]" />
+                    <div className="absolute right-7 top-12 h-5 w-5 rounded-full border-4 border-black bg-emerald-300" />
+                    <div className="absolute inset-x-0 bottom-0 text-center">
+                      <p className="text-4xl font-black">87%</p>
+                      <p className="mt-1 text-xl font-bold text-emerald-100">Plan Active</p>
+                      <p className="mt-1 text-xs text-slate-500">Agent ready to execute</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </article>
           ))}
         </div>
       </div>
