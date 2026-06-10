@@ -26,16 +26,22 @@ export const getSmartAccount = async (): Promise<{
     transport: http('https://sepolia.base.org'),
   });
 
-  const walletClient = createWalletClient({
+  const tempWalletClient = createWalletClient({
     chain: baseSepolia,
     transport: custom(ethereum as any),
   });
 
-  const [eoaAddress] = await walletClient.requestAddresses();
+  const [eoaAddress] = await tempWalletClient.requestAddresses();
 
   if (!eoaAddress) {
     throw new Error('Failed to get EOA signer address.');
   }
+
+  const walletClient = createWalletClient({
+    chain: baseSepolia,
+    account: eoaAddress,
+    transport: custom(ethereum as any),
+  });
 
   const smartAccount = (await toMetaMaskSmartAccount({
     client: publicClient,
