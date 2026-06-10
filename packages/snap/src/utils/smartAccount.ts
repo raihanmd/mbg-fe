@@ -26,7 +26,8 @@ export const getSmartAccountAddressInSnap = async () => {
     client: publicClient,
     implementation: Implementation.Hybrid,
     deployParams: [eoaAddress, [], [], []],
-    deploySalt: '0x',
+    deploySalt:
+      '0x0000000000000000000000000000000000000000000000000000000000000887', // We ensure that newly created Smart Acc is Fresh and we can make sure to compatible with Metamask Delegation Framework
     signer: { walletClient },
   });
 

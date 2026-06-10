@@ -1,26 +1,43 @@
 import { getSkillById } from "../api/skills";
-import { Text, Bold, Selector, SelectorOption, Card, Box, Divider, Button, Form, Heading, Row, Input } from "@metamask/snaps-sdk/jsx";
-import { SkillOptions } from "src/types/SkillItem";
-import { formatUnits } from "viem";
-
+import {
+  Text,
+  Bold,
+  Selector,
+  SelectorOption,
+  Card,
+  Box,
+  Divider,
+  Button,
+  Form,
+  Heading,
+  Row,
+  Input,
+  Field,
+  Section,
+  Link,
+  Address,
+  Copyable,
+} from "@metamask/snaps-sdk/jsx";
 
 const handleSkillSelectorFormSubmit = async ({
   id,
   event,
   usdcRawBalance,
+  smartAccountAddress,
 }: {
   id: string;
   event: any;
   usdcRawBalance: string;
+  smartAccountAddress: string;
 }): Promise<void> => {
   await snap.request({
-    method: 'snap_updateInterface',
+    method: "snap_updateInterface",
     params: {
       id,
       ui: (
         <Box>
-          <Heading>Fetching Strategy... ⏳</Heading>
-          <Text>Sedang mengambil data strategi dari backend NestJS...</Text>
+          <Heading>Loading Skill...</Heading>
+          <Text>Fetching skill configuration.</Text>
         </Box>
       ),
     },
@@ -28,241 +45,312 @@ const handleSkillSelectorFormSubmit = async ({
 
   try {
     const formValues = event.value as Record<string, any>;
-    const selectedSkillId = formValues?.['skill-selector'];
-
-    console.log('ID Skill yang dipilih:', selectedSkillId);
+    const selectedSkillId = formValues?.["skill-selector"];
 
     if (!selectedSkillId) {
-      throw new Error('Kamu belum memilih strategi di halaman awal!');
+      throw new Error("No skill selected. Please choose a skill first.");
     }
 
-    // 3. Panggil API ke NestJS
     const selectedSkill = await getSkillById(selectedSkillId);
-    console.log('Data Skill Terpilih:', selectedSkill);
 
     if (!selectedSkill || !selectedSkill.parameters) {
-      throw new Error('Failed to load skill data');
+      throw new Error("Failed to load skill data");
     }
+
     const skillName = selectedSkill.name;
     const skillDescription = selectedSkill.description;
     const chainId = selectedSkill.chainId;
-
+    const parameters = (selectedSkill.parameters || []) as any[];
     const usdcHumanBalance = (Number(usdcRawBalance) / 1_000_000).toFixed(2);
-    const spendModeParam = selectedSkill.parameters?.find(
-      (p: any) => p.key === 'spendMode',
-    );
-    const percentOfInboundParam = selectedSkill.parameters?.find(
-      (p: any) => p.key === 'percentOfInboundBps',
-    );
-    const defaultHumanPercent = percentOfInboundParam?.defaultValue
-      ? (Number(percentOfInboundParam.defaultValue) / 100).toString()
-      : '50';
-    const amountPerRunParam = selectedSkill.parameters?.find(
-      (p: any) => p.key === 'amountPerRun',
-    );
-
-    const amountUsdcParam = selectedSkill.parameters?.find(
-      (p: any) => p.key === 'amountUsdc',
-    );
-    const dailyLimitParam = selectedSkill.parameters?.find(
-      (p: any) => p.key === 'dailySpendLimit',
-    );
-    const defaultHumanDailyLimit = dailyLimitParam?.defaultValue
-      ? formatUnits(BigInt(dailyLimitParam.defaultValue), 6)
-      : '50';
-
-    const selectors = selectedSkill.delegationScope?.selectors || [];
-    const outputTokenParam = selectedSkill.parameters?.find(
-      (p: any) => p.key === 'outputToken',
-    );
 
     await snap.request({
-      method: 'snap_updateInterface',
+      method: "snap_updateInterface",
       params: {
         id,
         ui: (
           <Form
             name={`prepare-installation-form:${selectedSkill.skillId}:${selectedSkill.runType}`}
           >
-            <Heading>Konfirmasi Strategi 📝</Heading>
+            <Button name="nav:home">← Back to Home</Button>
+            <Divider />
 
-            <Box>
-              <Row label="Strategi">
+            <Heading>Configure Skill</Heading>
+
+            <Section>
+              <Row label="Strategy">
                 <Text>
                   <Bold>{skillName}</Bold>
                 </Text>
               </Row>
               <Row label="Network">
-                <Text>Base Sepolia</Text>
+                <Text>
+                  {chainId === 84532 ? "Base Sepolia" : `Chain ${chainId}`}
+                </Text>
               </Row>
-              {selectedSkill.runType === 'cron' &&
-              selectedSkill.cronExpression ? (
-                <Row label="Jadwal Run">
-                  <Text>
-                    {selectedSkill.cronExpression === '0 9 * * *'
-                      ? 'Everyday at 09:00'
-                      : selectedSkill.cronExpression}
-                  </Text>
-                </Row>
-              ) : null}
-            </Box>
+              <Row label="Smart Account">
+                <Address address={smartAccountAddress} />
+              </Row>
+              <Copyable value={smartAccountAddress} />
+              {selectedSkill.runType === "cron" &&
+                selectedSkill.cronExpression && (
+                  <Row label="Schedule">
+                    <Text>
+                      {selectedSkill.cronExpression === "0 9 * * *"
+                        ? "Everyday at 09:00"
+                        : selectedSkill.cronExpression}
+                    </Text>
+                  </Row>
+                )}
+            </Section>
 
             <Divider />
 
-            <Text>
-              <Bold>Description:</Bold>
-            </Text>
             <Text>{skillDescription}</Text>
-            <Text>
-              <Bold>Chain ID: </Bold>
-              {chainId.toString()}
-            </Text>
 
             <Divider />
 
-            {/* INPUT PARAMETER DINAMIS USER */}
+            {selectedSkill.aiConfig && (
+              <Section>
+                <Row label="AI Provider">
+                  <Text>{selectedSkill.aiConfig.provider}</Text>
+                </Row>
+                <Text>
+                  Uses AI for pre-execution analysis before each run.
+                </Text>
+              </Section>
+            )}
+
+            <Text>
+              Balance: <Bold>{usdcHumanBalance} USDC</Bold>
+            </Text>
+
             <Text>
               <Bold>Configure Parameters:</Bold>
             </Text>
 
-            {/* 1. SELECTOR TARGET TOKEN */}
-            <Text>Target Token:</Text>
-            <Selector
-              name="param-output-token"
-              title="Select Token"
-              value={outputTokenParam?.defaultValue}
-            >
-              {(outputTokenParam?.options || []).map((opt: SkillOptions) => {
-                let cardValueDescription = 'Standard Token';
-
-                if (opt.metadata) {
-                  if (opt.metadata.address) {
-                    cardValueDescription = `${opt.metadata.address.slice(0, 6)}...${opt.metadata.address.slice(-4)}`;
-                  } else if (opt.metadata.symbol) {
-                    cardValueDescription = `${opt.metadata.symbol} Token`;
+            {parameters.map((param: any) => {
+              const paramName = `param-${param.key}`;
+              switch (param.type) {
+                case "select":
+                  return (
+                    <Box key={param.key}>
+                      <Field label={param.label}>
+                        <Selector
+                          name={paramName}
+                          title={param.label}
+                          value={param.defaultValue}
+                        >
+                          {param.options.map((opt: any) => {
+                            let desc = "Standard Token";
+                            if (opt.metadata?.address) {
+                              const addr = opt.metadata.address;
+                              desc = `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+                            } else if (opt.metadata?.symbol) {
+                              desc = `${opt.metadata.symbol} Token`;
+                            } else if (opt.value) {
+                              desc = `${opt.value.toUpperCase()} Token`;
+                            }
+                            return (
+                              <SelectorOption
+                                key={opt.value}
+                                value={opt.value}
+                              >
+                                <Card
+                                  title={
+                                    opt.label || opt.value.toUpperCase()
+                                  }
+                                  value={desc}
+                                />
+                              </SelectorOption>
+                            );
+                          })}
+                        </Selector>
+                      </Field>
+                      {param.description && (
+                        <Text color="muted">{param.description}</Text>
+                      )}
+                    </Box>
+                  );
+                case "number":
+                  return (
+                    <Box key={param.key}>
+                      <Field label={param.label}>
+                        <Input
+                          name={paramName}
+                          type="number"
+                          min={param.min ?? 0}
+                          max={param.max}
+                          step={param.integer ? 1 : undefined}
+                          placeholder={param.defaultValue?.toString()}
+                        />
+                      </Field>
+                      {param.description && (
+                        <Text color="muted">{param.description}</Text>
+                      )}
+                    </Box>
+                  );
+                case "boolean":
+                  return (
+                    <Box key={param.key}>
+                      <Field label={param.label}>
+                        <Input
+                          name={paramName}
+                          type="text"
+                          placeholder="true or false"
+                        />
+                      </Field>
+                      {param.description && (
+                        <Text color="muted">{param.description}</Text>
+                      )}
+                    </Box>
+                  );
+                case "string":
+                  return (
+                    <Box key={param.key}>
+                      <Field label={param.label}>
+                        <Input
+                          name={paramName}
+                          type="text"
+                          placeholder={param.defaultValue?.toString()}
+                        />
+                      </Field>
+                      {param.description && (
+                        <Text color="muted">{param.description}</Text>
+                      )}
+                    </Box>
+                  );
+                case "address":
+                  return (
+                    <Box key={param.key}>
+                      <Field label={param.label}>
+                        <Input
+                          name={paramName}
+                          type="text"
+                          placeholder="0x..."
+                          value={param.defaultValue}
+                        />
+                      </Field>
+                      {param.description && (
+                        <Text color="muted">{param.description}</Text>
+                      )}
+                    </Box>
+                  );
+                case "cron": {
+                  const cronDefault = (param.defaultValue ||
+                    "0 */6 * * *") as string;
+                  const hourMatch = cronDefault.match(/\*\/(\d+)/);
+                  const dayMatch = cronDefault.match(/0 0 \*\/(\d+)/);
+                  const weekMatch = cronDefault.match(/0 0 \* \* (\d+)/);
+                  let defaultNum = 6;
+                  let defaultUnit: "hours" | "days" | "weeks" = "hours";
+                  if (weekMatch) {
+                    defaultNum = parseInt(weekMatch[1], 10);
+                    defaultUnit = "weeks";
+                  } else if (dayMatch) {
+                    defaultNum = parseInt(dayMatch[1], 10);
+                    defaultUnit = "days";
+                  } else if (hourMatch) {
+                    defaultNum = parseInt(hourMatch[1], 10);
                   }
-                } else if (opt.value) {
-                  cardValueDescription = `${opt.value.toUpperCase()} Token`;
+                  return (
+                    <Box key={param.key}>
+                      <Field label={param.label}>
+                        <Input
+                          name={`${paramName}_freqNum`}
+                          type="number"
+                          min={1}
+                          value={String(defaultNum)}
+                        />
+                      </Field>
+                      <Field label="Frequency">
+                        <Selector
+                          name={`${paramName}_freqUnit`}
+                          title="Frequency"
+                          value={defaultUnit}
+                        >
+                          <SelectorOption value="hours">
+                            <Card
+                              title="Hours"
+                              value="Run every N hours"
+                            />
+                          </SelectorOption>
+                          <SelectorOption value="days">
+                            <Card
+                              title="Days"
+                              value="Run every N days"
+                            />
+                          </SelectorOption>
+                          <SelectorOption value="weeks">
+                            <Card
+                              title="Weeks"
+                              value="Run every N weeks"
+                            />
+                          </SelectorOption>
+                        </Selector>
+                      </Field>
+                      {param.description && (
+                        <Text color="muted">{param.description}</Text>
+                      )}
+                    </Box>
+                  );
                 }
+                default:
+                  return null;
+              }
+            })}
 
-                return (
-                  <SelectorOption key={opt.value} value={opt.value}>
-                    <Card
-                      title={opt.label || opt.value.toUpperCase()}
-                      value={cardValueDescription}
-                    />
-                  </SelectorOption>
-                );
-              })}
-            </Selector>
-
-            {amountUsdcParam ? (
-              <Box>
-                <Text>
-                  <Bold>{amountUsdcParam.label} :</Bold>
-                </Text>
-                <Text>{amountUsdcParam.description}</Text>
-                <Text>
-                  Current USDC Balance: <Bold>{usdcHumanBalance} USDC</Bold>
-                </Text>
-                <Input
-                  name="param-amount-usdc"
-                  type="number"
-                  step={0.01}
-                  max={Number(usdcHumanBalance)}
-                  min={0}
-                  placeholder={`Maximal: ${usdcHumanBalance}`}
-                  value={usdcHumanBalance}
-                />
-              </Box>
-            ) : null}
-
-            {/* 2. SELECTOR SPEND MODE */}
-            {spendModeParam ? (
-              <Box>
-                <Text>
-                  <Bold>{spendModeParam.label} :</Bold>
-                </Text>
-                <Text>{spendModeParam.description}</Text>
-                <Selector
-                  name="param-spend-mode"
-                  title="Select Mode"
-                  value={spendModeParam.defaultValue}
-                >
-                  {(spendModeParam.options || []).map((opt: SkillOptions) => (
-                    <SelectorOption key={opt.value} value={opt.value}>
-                      <Card title={opt.label} value={`Mode: ${opt.value}`} />
-                    </SelectorOption>
-                  ))}
-                </Selector>
-              </Box>
-            ) : null}
-
-            {amountPerRunParam || percentOfInboundParam ? (
-              <Box>
-                <Text>
-                  <Bold>Allocation Per Run :</Bold>
-                </Text>
-                <Text>Configure the amount of USDC or Percentage</Text>
-                <Text>
-                  Current USDC Balance: <Bold>{usdcHumanBalance} USDC</Bold>
-                </Text>
-                <Input
-                  name="param-allocation"
-                  type="number"
-                  step={0.01}
-                  max={
-                    spendModeParam?.defaultValue === 'fixed'
-                      ? Number(usdcHumanBalance)
-                      : 100
-                  }
-                  min={0}
-                  placeholder="e.g. 10 for 10 USDC or 10%"
-                  value={usdcHumanBalance}
-                />
-              </Box>
-            ) : null}
-
-            {dailyLimitParam ? (
-              <Box>
-                <Text>
-                  <Bold>{dailyLimitParam.label} :</Bold>
-                </Text>
-                <Text>{dailyLimitParam.description}</Text>
-                <Input
-                  name="param-daily-limit"
-                  type="number"
-                  step={0.01}
-                  max={Number(usdcHumanBalance)}
-                  min={0}
-                  placeholder={`Maximal: ${usdcHumanBalance}`}
-                  value={defaultHumanDailyLimit}
-                />
-              </Box>
-            ) : null}
             <Divider />
 
-            {/* DAFTAR IZIN KONTRAK MENGGUNAKAN ROW */}
             <Text>
-              <Bold>Allowed Method:</Bold>
+              <Bold>Required Permissions</Bold>
             </Text>
-            <Box>
-              {selectors.map((selector: string) => {
-                const functionName = selector.split('(')[0] as string;
-                return (
-                  <Row key={selector} label="Allowed Method">
-                    <Text>
-                      <Bold>{functionName}</Bold>
-                    </Text>
-                  </Row>
-                );
-              })}
-            </Box>
+
+            {selectedSkill.delegationScopeMeta?.length
+              ? selectedSkill.delegationScopeMeta.map((meta: any) => (
+                  <Section key={meta.targetIndex}>
+                    <Row label="Contract">
+                      <Text>
+                        <Bold>{meta.label}</Bold>
+                      </Text>
+                    </Row>
+                    {meta.description && <Text>{meta.description}</Text>}
+                    {meta.selectors.map((sel: any) => (
+                      <Row key={sel.signature} label={sel.label}>
+                        <Text>{sel.description}</Text>
+                      </Row>
+                    ))}
+                    {meta.contractUrl && (
+                      <Row label="Explorer">
+                        <Link href={meta.contractUrl}>
+                          View on BaseScan
+                        </Link>
+                      </Row>
+                    )}
+                    {meta.target && (
+                      <Row label="Contract Address">
+                        <Address address={meta.target} />
+                      </Row>
+                    )}
+                  </Section>
+                ))
+              : (selectedSkill.delegationScope?.selectors || []).map(
+                  (selector: string) => {
+                    const functionName =
+                      selector.split("(")[0] || selector;
+                    return (
+                      <Row key={selector} label="Allowed Method">
+                        <Text>
+                          <Bold>{functionName}</Bold>
+                        </Text>
+                      </Row>
+                    );
+                  },
+                )}
 
             <Divider />
 
             <Button name="execute-prepare" type="submit" variant="primary">
-              Confirm & Grant Permissions 🚀
+              Confirm & Grant Permissions
             </Button>
           </Form>
         ),
@@ -272,6 +360,5 @@ const handleSkillSelectorFormSubmit = async ({
     throw error;
   }
 };
-
 
 export default handleSkillSelectorFormSubmit;
