@@ -14,7 +14,6 @@ const config: SnapConfig = {
   },
   environment: {
     API_URL: process.env.API_URL || 'http://localhost:4000',
-    PIMLICO_EXEC_KEY: process.env.PIMLICO_EXEC_KEY || '',
   },
   customizeWebpackConfig: (webpackConfig) => {
     const VSCODE_EXTENSION_PLUGIN_PATTERNS = [

@@ -1,13 +1,13 @@
 {
   "version": "0.1.0",
-  "description": "SkillWallet* — AI-powered automated on-chain skill execution.",
-  "proposedName": "SkillWallet*",
+  "description": "SkillWallet — AI-powered automated on-chain skill execution.",
+  "proposedName": "SkillWallet",
   "repository": {
     "type": "git",
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "+8V97ZRnS9GvNmueUC0aYk+aXtFfeJYSHxCmeyG7GjE=",
+    "shasum": "bP4WotyBGHXU00cxkNNWKeM8yBeG/C5ZN5L24yCcGcA=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",

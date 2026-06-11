@@ -1,5 +1,3 @@
-import { getExplorerUrl, NETWORK_NAMES } from './networkConfig';
-
 export const shortenAddress = (
   address: string,
   chars = 4,
@@ -41,20 +39,23 @@ export const getExplorerTxUrl = (
   chainId: number,
   txHash: string,
 ): string => {
-  const explorerUrl = getExplorerUrl(chainId) || 'https://sepolia.basescan.org';
-  return `${explorerUrl}/tx/${txHash}`;
+  const baseUrls: Record<number, string> = {
+    84532: 'https://sepolia.basescan.org/tx',
+    1: 'https://etherscan.io/tx',
+  };
+  return `${baseUrls[chainId] || 'https://sepolia.basescan.org/tx'}/${txHash}`;
 };
 
 export const getExplorerAddressUrl = (
   chainId: number,
   address: string,
 ): string => {
-  const explorerUrl = getExplorerUrl(chainId) || 'https://sepolia.basescan.org';
-  return `${explorerUrl}/address/${address}`;
+  const baseUrls: Record<number, string> = {
+    84532: 'https://sepolia.basescan.org/address',
+    1: 'https://etherscan.io/address',
+  };
+  return `${baseUrls[chainId] || 'https://sepolia.basescan.org/address'}/${address}`;
 };
-
-export const getNetworkName = (chainId: number): string =>
-  NETWORK_NAMES[chainId as keyof typeof NETWORK_NAMES] ?? `Chain ${chainId}`;
 
 export const parseMaybeJson = (
   str: string | undefined | null,

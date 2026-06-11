@@ -1,6 +1,11 @@
 import { createPublicClient, http, erc20Abi } from 'viem';
 import { baseSepolia } from 'viem/chains';
-import { getUsdcAddress } from './networkConfig';
+
+const USDC_CONTRACTS: Record<number, `0x${string}`> = {
+  1: '0xA0b86991c6218b36c1d19d4a2e9eb0cE3606eB48',
+  11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+  84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Base Sepolia
+};
 
 /**
  * Mengambil saldo token USDC dalam bentuk string unit atom (raw BigInt string)
@@ -9,9 +14,9 @@ export const getUsdcBalance = async (
   address: string,
   chainId: number,
 ): Promise<string> => {
-  const contractAddress = getUsdcAddress(chainId);
+  const contractAddress = USDC_CONTRACTS[chainId];
   if (!contractAddress) {
-    throw new Error(`USDC address not configured for chain ${chainId}`);
+    return '0';
   }
 
   const publicClient = createPublicClient({

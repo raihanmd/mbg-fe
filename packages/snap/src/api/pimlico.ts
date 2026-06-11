@@ -1,6 +1,11 @@
+/**
+ * @deprecated This module proxies Pimlico calls through the backend.
+ * Use `../utils/pimlicoClient` instead, which calls Pimlico RPC directly.
+ */
+
 const API_URL = 'http://localhost:4000';
 // TODO: Replace with your Pimlico execution key for production
-const PIMLICO_EXEC_KEY = '';
+const PIMLICO_EXEC_KEY = 'b0bc742e-6741-48dd-afb5-151366226f47';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -69,17 +74,14 @@ export async function submitUserOp(
   userOp: Record<string, unknown>,
   chainId?: number,
 ): Promise<SubmitUserOpResponse> {
-  const response = await globalThis.fetch(
-    `${API_URL}/pimlico/submit-user-op`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-pimlico-key': PIMLICO_EXEC_KEY as string,
-      },
-      body: JSON.stringify({ ...userOp, chainId }),
+  const response = await globalThis.fetch(`${API_URL}/pimlico/submit-user-op`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-pimlico-key': PIMLICO_EXEC_KEY as string,
     },
-  );
+    body: JSON.stringify({ ...userOp, chainId }),
+  });
   return handleResponse<SubmitUserOpResponse>(response);
 }
 
