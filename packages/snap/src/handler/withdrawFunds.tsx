@@ -5,6 +5,7 @@ import { baseSepolia } from 'viem/chains';
 import { getSmartAccount } from '../utils/smartAccount';
 
 const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+const WETH_ADDRESS = '0x4200000000000000000000000000000000000006';
 const USDC_DECIMALS = 6;
 const PIMLICO_URL = 'https://api.pimlico.io/v2/base-sepolia/rpc?apikey=pim_6nVf8zJFiq6mdBjgPTHCFf';
 
@@ -35,7 +36,7 @@ export const handleWithdrawFunds = async ({
   smartAccountAddress,
 }: {
   id: string;
-  token: 'eth' | 'usdc';
+  token: 'eth' | 'weth' | 'usdc';
   userAddress: `0x${string}`;
   smartAccountAddress: `0x${string}`;
 }): Promise<void> => {
@@ -112,6 +113,39 @@ export const handleWithdrawFunds = async ({
         }
 
         calls = [{ to: userAddress, value: balance, data: '0x' }];
+      } else if (token === 'weth') {
+        const balance = await publicClient.readContract({
+          address: WETH_ADDRESS,
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [smartAccountAddress],
+        });
+
+        if (balance === 0n) {
+          await snap.request({
+            method: 'snap_updateInterface',
+            params: {
+              id,
+              ui: (
+                <Box>
+                  <Heading>Withdrawal Failed</Heading>
+                  <Text color="error">No WETH balance to withdraw</Text>
+                  <Divider />
+                  <Button name="nav:home">Back to Home</Button>
+                </Box>
+              ),
+            },
+          });
+          return;
+        }
+
+        const transferData = encodeFunctionData({
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args: [userAddress, balance],
+        });
+
+        calls = [{ to: WETH_ADDRESS, value: 0n, data: transferData }];
       } else {
         const balance = await publicClient.readContract({
           address: USDC_ADDRESS,

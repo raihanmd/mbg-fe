@@ -91,6 +91,7 @@ async function buildHomeContent() {
             <Text>{usdcBalance} USDC</Text>
           </Row>
           <Address address={smartAccountAddress} />
+          <Copyable value={smartAccountAddress} />
         </Section>
       ) : (
         <Box>
@@ -233,6 +234,9 @@ async function buildHomeContent() {
             <Button name="withdraw-eth" variant="primary" size="md">
               Withdraw ETH
             </Button>
+            <Button name="withdraw-weth" variant="primary" size="md">
+              Withdraw WETH
+            </Button>
             <Button name="withdraw-usdc" variant="primary" size="md">
               Withdraw USDC
             </Button>
@@ -347,6 +351,19 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         return;
       }
 
+      // Withdraw WETH — show confirmation (two-phase flow in handler)
+      if (event.name === 'withdraw-weth') {
+        const { userAddress, smartAccountAddress } =
+          await getSmartAccountAddressInSnap();
+        await handleWithdrawFunds({
+          id,
+          token: 'weth',
+          userAddress,
+          smartAccountAddress,
+        });
+        return;
+      }
+
       // Withdraw USDC — show confirmation (two-phase flow in handler)
       if (event.name === 'withdraw-usdc') {
         const { userAddress, smartAccountAddress } =
@@ -362,7 +379,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
 
       // Confirm withdraw — execute the actual withdrawal
       if (event.name.startsWith('confirm-withdraw:')) {
-        const token = event.name.split(':')[1] as 'eth' | 'usdc';
+        const token = event.name.split(':')[1] as 'eth' | 'weth' | 'usdc';
         const { userAddress, smartAccountAddress } =
           await getSmartAccountAddressInSnap();
         await handleWithdrawFunds({
