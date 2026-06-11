@@ -50,8 +50,8 @@ const Skills = () => {
           <p className="eyebrow">Skill modules</p>
           <h2>Installable wallet skills</h2>
           <p className="section-lead">
-            Skills are installed as permissioned modules. Each skill declares its
-            trigger, execution scope, and whether AI reasoning is enabled.
+            Skills are installed as permissioned modules. Each skill declares
+            its trigger, execution scope, and whether AI reasoning is enabled.
           </p>
         </div>
         <div className="skills-grid">
@@ -69,13 +69,6 @@ const Skills = () => {
                   </div>
                 ))}
               </dl>
-              <button
-                className="button button-primary"
-                onClick={() => requestSnap()}
-                disabled={!!installedSnap}
-              >
-                {installedSnap ? 'Installed' : `Install ${skill.name}`}
-              </button>
             </article>
           ))}
         </div>

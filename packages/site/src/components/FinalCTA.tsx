@@ -11,7 +11,7 @@ const FinalCTA = () => {
         <h2>Start with one bounded wallet skill.</h2>
         <div className="cta-actions">
           <button
-            className="button button-primary"
+            className="button button-secondary"
             onClick={() => requestSnap()}
             disabled={!!installedSnap}
           >

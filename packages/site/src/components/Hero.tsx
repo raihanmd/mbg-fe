@@ -21,7 +21,7 @@ const Hero = () => {
           </p>
           <div className="hero-actions">
             <button
-              className="button button-primary"
+              className="button button-secondary"
               onClick={() => requestSnap()}
               disabled={!!installedSnap}
             >

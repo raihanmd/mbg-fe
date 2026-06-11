@@ -1,5 +1,5 @@
 import { useMetaMask, useRequestSnap } from '../hooks';
-import LOGO from "../assets/logo-only.webp";
+import LOGO from '../assets/logo-only.webp';
 
 export const Header = () => {
   const { installedSnap } = useMetaMask();
@@ -21,7 +21,7 @@ export const Header = () => {
 
         <div className="header-actions">
           <button
-            className="button button-primary"
+            className="button button-secondary"
             onClick={() => requestSnap()}
             disabled={!!installedSnap}
           >
