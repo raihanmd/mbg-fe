@@ -3,9 +3,9 @@ import { useMetaMask, useRequestSnap } from '../hooks';
 const skills = [
   {
     name: 'AI-Powered DCA',
-    badge: 'schedule',
+    badge: 'cron',
     details: [
-      { label: 'Trigger', value: 'schedule' },
+      { label: 'Trigger', value: 'custom cron' },
       { label: 'Data', value: 'optional x402' },
       { label: 'Reasoning', value: 'Venice AI enabled' },
       { label: 'Execution', value: 'delegated backend call' },

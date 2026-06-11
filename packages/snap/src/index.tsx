@@ -27,9 +27,12 @@ import { handleConfirmInstallation } from './handler/confirmInstallation';
 import { handlePrepareInstallation } from './handler/prepareInstallation';
 import { handleExecutionHistory } from './handler/executionHistory';
 import { getSmartAccountAddressInSnap } from './utils/smartAccount';
+import { getBalances } from './utils/getBalance';
 import { getUsdcBalance } from './utils/getUsdcBalance';
 import { checkDeployed } from './utils/deployment';
 import { handleDeploySmartAccount } from './handler/deploySmartAccount';
+import { handleManageSkill, executeManageAction } from './handler/manageSkill';
+import { handleWithdrawFunds } from './handler/withdrawFunds';
 import {
   formatTokenAmount,
   formatDate,
@@ -45,6 +48,12 @@ async function buildHomeContent() {
     getAllInstalledSkills(userAddress),
     checkDeployed(smartAccountAddress),
   ]);
+
+  const balances = isDeployed
+    ? await getBalances(smartAccountAddress)
+    : { eth: '0.00', usdc: '0.00' };
+  const ethBalance = balances.eth;
+  const usdcBalance = balances.usdc;
 
   const skillNameMap = new Map(
     skills.map((s) => [s.skillId, s.name]),
@@ -62,11 +71,26 @@ async function buildHomeContent() {
     <Box>
       <Heading>DCA Skill Wallet</Heading>
 
+      <Section>
+        <Row label="Network">
+          <Text>
+            <Bold>Base Sepolia</Bold>
+          </Text>
+        </Row>
+      </Section>
+
       {isDeployed ? (
         <Section>
           <Row label="Smart Account">
             <Text>✅ Deployed</Text>
           </Row>
+          <Row label="ETH Balance">
+            <Text>{ethBalance} ETH</Text>
+          </Row>
+          <Row label="USDC Balance">
+            <Text>{usdcBalance} USDC</Text>
+          </Row>
+          <Address address={smartAccountAddress} />
         </Section>
       ) : (
         <Box>
@@ -148,6 +172,19 @@ async function buildHomeContent() {
               >
                 View History
               </Button>
+              <Button
+                name={`manage-skill:${item._id}:${item.status === 'paused' ? 'resume' : 'pause'}`}
+                size="md"
+              >
+                {item.status === 'paused' ? 'Resume' : 'Pause'}
+              </Button>
+              <Button
+                name={`manage-skill:${item._id}:revoke`}
+                size="md"
+                variant="destructive"
+              >
+                Revoke
+              </Button>
               <Divider />
             </Box>
           );
@@ -184,13 +221,24 @@ async function buildHomeContent() {
         </Button>
       </Form>
 
-      <Divider />
-      <Section>
-        <Row label="Smart Account">
-          <Address address={smartAccountAddress} />
-        </Row>
-        <Copyable value={smartAccountAddress} />
-      </Section>
+      {isDeployed && (
+        <Box>
+          <Divider />
+          <Section>
+            <Row label="Withdraw">
+              <Text>
+                Withdraw funds from your smart account to your EOA
+              </Text>
+            </Row>
+            <Button name="withdraw-eth" variant="primary" size="md">
+              Withdraw ETH
+            </Button>
+            <Button name="withdraw-usdc" variant="primary" size="md">
+              Withdraw USDC
+            </Button>
+          </Section>
+        </Box>
+      )}
     </Box>
   );
 }
@@ -241,6 +289,88 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
       }
       if (event.name === 'nav:home') {
         await renderHomePage(id);
+        return;
+      }
+
+      // Manage skill — show confirmation screen
+      if (event.name.startsWith('manage-skill:')) {
+        const parts = event.name.split(':');
+        const installationId = parts[1];
+        const action = parts[2] as 'revoke' | 'pause' | 'resume';
+        const { userAddress } = await getSmartAccountAddressInSnap();
+        const installations = await getAllInstalledSkills(userAddress);
+        const installation = installations.data.find(
+          (i) => i._id === installationId,
+        );
+        const skillName = installation?.skillId?.name ?? 'Unknown';
+        await handleManageSkill({
+          id,
+          installationId,
+          action,
+          userAddress,
+          skillName,
+        });
+        return;
+      }
+
+      // Execute confirmed manage action
+      if (event.name.startsWith('confirm-manage:')) {
+        const parts = event.name.split(':');
+        const installationId = parts[1];
+        const action = parts[2] as 'revoke' | 'pause' | 'resume';
+        const { userAddress } = await getSmartAccountAddressInSnap();
+        const installations = await getAllInstalledSkills(userAddress);
+        const installation = installations.data.find(
+          (i) => i._id === installationId,
+        );
+        const skillName = installation?.skillId?.name ?? 'Unknown';
+        await executeManageAction({
+          id,
+          installationId,
+          action,
+          userAddress,
+          skillName,
+        });
+        return;
+      }
+
+      // Withdraw ETH — show confirmation (two-phase flow in handler)
+      if (event.name === 'withdraw-eth') {
+        const { userAddress, smartAccountAddress } =
+          await getSmartAccountAddressInSnap();
+        await handleWithdrawFunds({
+          id,
+          token: 'eth',
+          userAddress,
+          smartAccountAddress,
+        });
+        return;
+      }
+
+      // Withdraw USDC — show confirmation (two-phase flow in handler)
+      if (event.name === 'withdraw-usdc') {
+        const { userAddress, smartAccountAddress } =
+          await getSmartAccountAddressInSnap();
+        await handleWithdrawFunds({
+          id,
+          token: 'usdc',
+          userAddress,
+          smartAccountAddress,
+        });
+        return;
+      }
+
+      // Confirm withdraw — execute the actual withdrawal
+      if (event.name.startsWith('confirm-withdraw:')) {
+        const token = event.name.split(':')[1] as 'eth' | 'usdc';
+        const { userAddress, smartAccountAddress } =
+          await getSmartAccountAddressInSnap();
+        await handleWithdrawFunds({
+          id,
+          token,
+          userAddress,
+          smartAccountAddress,
+        });
         return;
       }
       return;
