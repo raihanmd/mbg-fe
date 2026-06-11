@@ -87,3 +87,57 @@ export const getInstallationExecutions = async (
   const data = await response.json();
   return data as { data: InstallationExecution[] };
 };
+
+export const revokeInstallation = async (
+  installationId: string,
+  userAddress: string,
+): Promise<{ message: string }> => {
+  const response = await globalThis.fetch(
+    `${API_URL}/installations/${installationId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userAddress }),
+    },
+  );
+
+  return handleResponse<{ message: string }>(response);
+};
+
+export const pauseInstallation = async (
+  installationId: string,
+  userAddress: string,
+): Promise<{ message: string }> => {
+  const response = await globalThis.fetch(
+    `${API_URL}/installations/${installationId}/pause`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userAddress }),
+    },
+  );
+
+  return handleResponse<{ message: string }>(response);
+};
+
+export const resumeInstallation = async (
+  installationId: string,
+  userAddress: string,
+): Promise<{ message: string }> => {
+  const response = await globalThis.fetch(
+    `${API_URL}/installations/${installationId}/resume`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userAddress }),
+    },
+  );
+
+  return handleResponse<{ message: string }>(response);
+};

@@ -1,16 +1,17 @@
 {
   "version": "0.1.0",
-  "description": "Metamask-Based Gigs — AI-powered automated on-chain skill execution.",
-  "proposedName": "(MBG) Metamask-Based Gigs",
+  "description": "SkillWallet — AI-powered automated on-chain skill execution.",
+  "proposedName": "SkillWallet",
   "repository": {
     "type": "git",
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "DL86ANJO1DaFgEQU0EaKjBARn37P890d9xrSpyyBVj8=",
+    "shasum": "QfvNMGDLNmdB0cdYoZ0sP/TpyEobPeiqD+0JWPBEDX0=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
+        "iconPath": "public/logo-only.svg",
         "packageName": "snap",
         "registry": "https://registry.npmjs.org/"
       }
