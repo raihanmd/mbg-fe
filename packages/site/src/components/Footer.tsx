@@ -6,12 +6,12 @@ import { SnapLogo } from "./SnapLogo";
 const FooterWrapper = styled.footer`
   position: relative;
   overflow: hidden;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
   background:
-    radial-gradient(circle at 20% 0%, rgba(103, 232, 249, 0.16), transparent 32rem),
-    radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.14), transparent 30rem),
-    #070a12;
-  color: #ffffff;
+    radial-gradient(circle at 20% 0%, rgba(56, 189, 248, 0.14), transparent 32rem),
+    radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.08), transparent 30rem),
+    #070b12;
+  color: #f8fafc;
 `;
 
 const Content = styled.div`
@@ -46,30 +46,30 @@ const LogoShell = styled.div`
   place-items: center;
   width: 2.8rem;
   height: 2.8rem;
-  border: 1px solid rgba(103, 232, 249, 0.35);
-  border-radius: 1rem;
-  background: rgba(103, 232, 249, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 0.625rem;
+  background: rgba(56, 189, 248, 0.12);
 `;
 
 const Title = styled.p`
   margin: 0;
-  font-size: 1.3rem;
-  font-weight: 900;
+  font-size: 1.125rem;
+  font-weight: 800;
 `;
 
 const Description = styled.p`
   margin: 1.25rem 0 0;
-  color: rgb(203, 213, 225);
-  font-size: 1rem;
-  line-height: 1.8;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  line-height: 1.7;
 `;
 
 const ColumnTitle = styled.p`
   margin: 0 0 1rem;
   color: rgb(165, 243, 252);
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 900;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
 `;
 
@@ -109,9 +109,9 @@ const BottomBar = styled.div`
   max-width: 80rem;
   margin: 0 auto;
   padding: 1.4rem 2.4rem 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgb(148, 163, 184);
-  font-size: 0.9rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  color: #64748b;
+  font-size: 0.8rem;
 
   ${({ theme }) => theme.mediaQueries.small} {
     flex-direction: column;
@@ -121,11 +121,11 @@ const BottomBar = styled.div`
 `;
 
 const Pill = styled.span`
-  border: 1px solid rgba(103, 232, 249, 0.25);
+  border: 1px solid rgba(103, 232, 249, 0.22);
   border-radius: 999px;
   background: rgba(103, 232, 249, 0.08);
   color: rgb(207, 250, 254);
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   font-weight: 800;
   padding: 0.55rem 0.8rem;
 `;
@@ -139,24 +139,23 @@ export const Footer = () => {
             <LogoShell>
               <SnapLogo color="rgb(103, 232, 249)" size={24} />
             </LogoShell>
-            <Title>MetaMask Based Gigs</Title>
+            <Title>SkillWallet*</Title>
           </BrandRow>
           <Description>
-            Install scoped AI agent skills for DCA execution. Configure USDC
-            budgets, target assets, inbound triggers, and daily spend limits
-            from a MetaMask Snap experience.
+            A permissioned skill runtime for MetaMask Smart Accounts. Install
+            skills, set limits, and let the backend execute approved actions —
+            with optional Venice AI reasoning and x402 data.
           </Description>
         </Brand>
 
         <div>
           <ColumnTitle>Product</ColumnTitle>
           <LinkList>
-            <FooterLink to="/#how-to-use">Browser Extension</FooterLink>
-            <FooterLink to="/#skills">AI Skills</FooterLink>
-            <FooterLink to="/#how-to-use">How to Use</FooterLink>
+            <FooterLink to="/#skills">Skills</FooterLink>
+            <FooterLink to="/#how-to-use">How It Works</FooterLink>
+            <FooterLink to="/#security">Security</FooterLink>
             <FooterLink to="/#configuration">Configuration</FooterLink>
-            <FooterLink to="/#security">Delegation Scope</FooterLink>
-            <FooterLink to="/#faq">FAQ</FooterLink>
+            <FooterLink to="/#pillars">Design Principles</FooterLink>
           </LinkList>
         </div>
 
@@ -196,7 +195,7 @@ export const Footer = () => {
       </Content>
 
       <BottomBar>
-        <span>© 2026 MBG. Built for bounded AI-powered DCA automation.</span>
+        <span>© 2026 MBG. Built with MetaMask, 1Shot, Venice AI, x402.</span>
         <Pill>USDC · WETH · cbBTC · Base Sepolia</Pill>
       </BottomBar>
     </FooterWrapper>

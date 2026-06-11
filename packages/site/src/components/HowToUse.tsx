@@ -1,24 +1,45 @@
-import React from 'react';
+import React from "react";
 
-import { defaultSnapOrigin } from '../config';
-import { useMetaMask, useRequestSnap } from '../hooks';
-import { isLocalSnap } from '../utils';
+import { defaultSnapOrigin } from "../config";
+import { useMetaMask, useRequestSnap } from "../hooks";
+import { isLocalSnap } from "../utils";
 
-const cards = [
+const steps = [
   {
-    title: 'Step 1',
-    description: 'Install the MBG Snap from your MetaMask browser extension.',
-    visual: 'install',
+    number: "01",
+    title: "Install skill",
+    description:
+      "Select a skill from the marketplace and add it to your Snap.",
   },
   {
-    title: 'Step 2',
-    description: 'Choose AI-Powered DCA, Custom Cron DCA, or USDC Inbound DCA.',
-    visual: 'config',
+    number: "02",
+    title: "Grant permission",
+    description:
+      "Define the spending scope: contracts, functions, and daily limits.",
   },
   {
-    title: 'Step 3',
-    description: 'Your plan is active and the agent executes inside your approved scope.',
-    visual: 'active',
+    number: "03",
+    title: "Trigger fires",
+    description:
+      "Cron schedule, onchain event, or manual execution starts the workflow.",
+  },
+  {
+    number: "04",
+    title: "Optional reasoning",
+    description:
+      "If enabled, Venice AI reads x402 data and returns execute or skip.",
+  },
+  {
+    number: "05",
+    title: "Execute",
+    description:
+      "1Shot submits the approved transaction through delegated permissions.",
+  },
+  {
+    number: "06",
+    title: "Review",
+    description:
+      "Every execution is recorded. Review what ran and why in your Snap dashboard.",
   },
 ];
 
@@ -30,83 +51,45 @@ const HowToUse = () => {
     : snapsDetected;
 
   return (
-    <section id="how-to-use" className="relative overflow-hidden bg-black px-6 py-24 text-white sm:px-10 lg:px-16">
-      <div className="absolute left-1/2 top-24 h-96 w-96 -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
-      <div className="relative mx-auto max-w-7xl">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-400">
-            ● How to install
+    <section id="how-to-use" className="py-28 bg-muted/10">
+      <div className="mx-auto max-w-6xl px-6 sm:px-10 lg:px-16">
+        <div className="max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
+            How It Works
           </p>
-          <h2 className="mt-4 text-5xl font-black leading-[0.92] tracking-tight sm:text-7xl">
-            Installs in
-            <span className="block bg-gradient-to-r from-cyan-100 via-emerald-200 to-cyan-300 bg-clip-text text-transparent">
-              seconds ↓
-            </span>
+          <h2 className="mt-4 text-xl font-bold tracking-tight sm:text-2xl lg:text-3xl">
+            How SkillWallet* runs a skill.
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-slate-400 sm:text-lg">
-            No more manual reminders. Add the Snap, select a DCA skill, and let your approved AI agent execute USDC plans automatically.
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
+            From install to review — every step keeps the user in control.
           </p>
         </div>
 
-        <div className="mt-16 grid gap-5 lg:grid-cols-3">
-          {cards.map((card) => (
+        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {steps.map((step, index) => (
             <article
-              key={card.title}
-              className="group relative min-h-[360px] overflow-hidden rounded-2xl border border-white/15 bg-white/[0.02] p-8 text-center shadow-2xl shadow-black/30 transition hover:-translate-y-1 hover:border-emerald-300/50"
+              key={step.number}
+              className="group relative rounded-xl bg-card border border-border/40 p-6"
             >
-              <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-emerald-500/20 via-cyan-400/5 to-transparent opacity-80" />
-              <div className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400/10 blur-3xl" />
+              <span className="text-5xl font-black text-primary/10 absolute top-4 right-6">
+                {step.number}
+              </span>
+              <h3 className="text-base font-semibold text-foreground">
+                {step.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                {step.description}
+              </p>
 
-              <div className="relative z-10">
-                <h3 className="text-4xl font-black tracking-tight">{card.title}</h3>
-                <p className="mx-auto mt-4 max-w-[15rem] text-sm leading-6 text-slate-400">
-                  {card.description}
-                </p>
-              </div>
-
-              {card.visual === 'install' && (
-                <div className="relative z-10 mt-12 flex justify-center">
-                  <div className="relative grid h-28 w-56 place-items-center rounded-[50%] border border-emerald-300/60 bg-emerald-400/10 shadow-[0_0_55px_rgba(34,197,94,0.35)]">
-                    <button
-                      type="button"
-                      disabled={!isMetaMaskReady || Boolean(installedSnap)}
-                      onClick={requestSnap}
-                      className="rounded-full border border-emerald-200/60 bg-emerald-400 px-6 py-3 text-sm font-black text-black shadow-[0_0_30px_rgba(74,222,128,0.5)]"
-                    >
-                      {installedSnap ? 'Snap Installed' : 'Add to MetaMask'}
-                    </button>
-                    <span className="absolute -right-2 bottom-8 text-2xl">⌁</span>
-                  </div>
-                </div>
-              )}
-
-              {card.visual === 'config' && (
-                <div className="relative z-10 mx-auto mt-10 max-w-[15rem] rounded-xl border border-white/10 bg-white/[0.08] p-4 text-left backdrop-blur">
-                  <p className="text-base font-black leading-5 text-white">Configure your DCA skill</p>
-                  <div className="mt-4 h-1.5 rounded-full bg-white/10">
-                    <div className="h-full w-2/3 rounded-full bg-emerald-400" />
-                  </div>
-                  {['AI sentiment', 'Cron schedule', 'Daily spend limit', 'Execution scope'].map((item, index) => (
-                    <div key={item} className="mt-3 flex items-center justify-between text-xs text-slate-300">
-                      <span>{index + 1}. {item}</span>
-                      <span className="text-emerald-300">○</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {card.visual === 'active' && (
-                <div className="relative z-10 mt-12 flex flex-col items-center">
-                  <div className="relative h-32 w-56">
-                    <div className="absolute inset-x-4 bottom-0 h-28 rounded-t-full border-[10px] border-b-0 border-emerald-400 shadow-[0_0_45px_rgba(34,197,94,0.45)]" />
-                    <div className="absolute right-7 top-12 h-5 w-5 rounded-full border-4 border-black bg-emerald-300" />
-                    <div className="absolute inset-x-0 bottom-0 text-center">
-                      <p className="text-4xl font-black">87%</p>
-                      <p className="mt-1 text-xl font-bold text-emerald-100">Plan Active</p>
-                      <p className="mt-1 text-xs text-slate-500">Agent ready to execute</p>
-                    </div>
-                  </div>
-                </div>
+              {index === 0 && (
+                <button
+                  type="button"
+                  disabled={!isMetaMaskReady || Boolean(installedSnap)}
+                  onClick={requestSnap}
+                  className="mt-6 rounded-xl bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none disabled:hover:translate-y-0"
+                >
+                  {installedSnap ? "Snap Installed" : "Install Snap"}
+                </button>
               )}
             </article>
           ))}

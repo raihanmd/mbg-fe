@@ -1,9 +1,9 @@
-# MetaMask Based Gigs (MBG)
+# SkillWallet* — AI-Powered DCA Automation
 
 A MetaMask Snap enabling users to install and execute AI-powered DCA (Dollar-Cost Averaging) skills for automated trading.
 ## Description
 
-MBG allows users to configure and execute DCA strategies using AI-driven skills. The available skills include:
+SkillWallet* allows users to configure and execute DCA strategies using AI-driven skills. The available skills include:
 - **Generic DCA**: Fixed USDC swaps into selected tokens at 9 AM daily.
 - **AI-Powered DCA**: Optimized swaps using AI market analysis.
 - **USDC Inbound DCA**: Swaps triggered by USDC incoming transfers.
@@ -16,11 +16,11 @@ MBG allows users to configure and execute DCA strategies using AI-driven skills.
 
 ## Installation
 1. Install MetaMask.
-2. Install the MBG Snap from the MetaMask store.
+2. Install the SkillWallet* Snap from the MetaMask store.
 3. Configure your DCA skills through MetaMask.
 
 ## Usage
-1. Open MetaMask and navigate to the MBG Snap.
+1. Open MetaMask and navigate to the SkillWallet* Snap.
 2. Select your desired DCA skill.
 3. Configure parameters:
    - Output token (WETH or cbBTC).

@@ -4,7 +4,7 @@ type SkillsResponse = {
   data: SkillItem[];
 };
 
-const API_URL = process.env.API_URL;
+const API_URL = 'http://localhost:4000';
 
 export const getAllSkills = async (): Promise<SkillItem[]> => {
   const response = await globalThis.fetch(`${API_URL}/skills`);

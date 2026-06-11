@@ -1,14 +1,14 @@
 
   const faqs = [
     {
-      question: "What is MBG?",
+      question: "What is SkillWallet*?",
       answer:
-        "MBG stands for MetaMask Based Gigs. It is a MetaMask Snap that lets users install AI agent skills for automated DCA execution.",
+        "SkillWallet* is a MetaMask Snap marketplace for autonomous AI-powered wallet skills.",
     },
     {
       question: "Do I need the MetaMask Chrome extension?",
       answer:
-        "Yes. Install the MetaMask Chrome extension first, then connect your wallet and install the MBG Snap from this site.",
+        "Yes. Install the MetaMask Chrome extension first, then connect your wallet and install the SkillWallet* Snap from this site.",
     },
     {
       question: "What assets are supported?",
@@ -23,7 +23,7 @@
     {
       question: "Does the AI get full wallet control?",
       answer:
-        "No. MBG is designed around scoped delegation. Skills define allowed targets, function selectors, and spending limits before execution.",
+        "No. SkillWallet* is designed around scoped delegation. Skills define allowed targets, function selectors, and spending limits before execution.",
     },
   ];
 
@@ -41,7 +41,7 @@ const FAQ = () => {
             Questions before you install?
           </h2>
           <p className="mt-5 text-lg leading-8 text-slate-300">
-            Quick answers about installing MBG, using AI skills, and keeping
+            Quick answers about installing SkillWallet*, using AI skills, and keeping
             automated DCA execution limited.
           </p>
         </div>

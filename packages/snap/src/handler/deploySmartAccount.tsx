@@ -1,32 +1,48 @@
-import { Box, Button, Heading, Text, Divider, Copyable } from '@metamask/snaps-sdk/jsx';
-import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
+import { Box, Button, Heading, Text, Divider, Copyable, Link } from '@metamask/snaps-sdk/jsx';
 import { createPublicClient, http } from 'viem';
-import { baseSepolia } from 'viem/chains';
-import { getSmartAccount } from '../utils/smartAccount';
-
-const PIMLICO_URL = 'https://api.pimlico.io/v2/base-sepolia/rpc?apikey=pim_6nVf8zJFiq6mdBjgPTHCFf';
-
-const getPimlicoBundlerClient = () => {
-  const publicClient = createPublicClient({
-    chain: baseSepolia,
-    transport: http('https://sepolia.base.org'),
-  });
-
-  const paymasterClient = createPaymasterClient({
-    transport: http(PIMLICO_URL),
-  });
-
-  return createBundlerClient({
-    client: publicClient,
-    transport: http(PIMLICO_URL),
-    paymaster: paymasterClient,
-    paymasterContext: {
-      sponsorshipPolicyId: 'sp_milky_cassandra_nova',
-    },
-  });
-};
+import {
+  getSmartAccount,
+  getSelectedChainId,
+  getSelectedAccountType,
+} from '../utils/smartAccount';
+import { getNetworkByChainId, getRpcUrl } from '../utils/networkConfig';
+import { getExplorerTxUrl, shortenAddress } from '../utils/format';
+import {
+  deployAndExecute,
+  submitUserOp,
+  pollReceipt,
+} from '../api/pimlico';
 
 export const handleDeploySmartAccount = async ({ id }: { id: string }) => {
+  const chainId = await getSelectedChainId();
+  const accountType = await getSelectedAccountType();
+  const network = getNetworkByChainId(chainId);
+  const networkName = network?.name ?? `Chain ${chainId}`;
+  const pimlicoId = network?.pimlicoId;
+
+  if (!pimlicoId) {
+    await snap.request({
+      method: 'snap_updateInterface',
+      params: {
+        id,
+        ui: (
+          <Box>
+            <Heading>Deployment Not Available</Heading>
+            <Text>
+              Smart account deployment is only available on Optimism, Base, and
+              Arbitrum. {networkName} (BSC) is not supported for deployment.
+            </Text>
+            <Divider />
+            <Button name="nav:home" variant="primary">
+              Back to Home
+            </Button>
+          </Box>
+        ),
+      },
+    });
+    return;
+  }
+
   try {
     await snap.request({
       method: 'snap_updateInterface',
@@ -35,29 +51,68 @@ export const handleDeploySmartAccount = async ({ id }: { id: string }) => {
         ui: (
           <Box>
             <Heading>Deploying Smart Account</Heading>
-            <Text>Deploying smart account to Base Sepolia. Please wait...</Text>
+            <Text>
+              Deploying smart account to {networkName}. Please wait...
+            </Text>
           </Box>
         ),
       },
     });
 
-    const { smartAccount } = await getSmartAccount();
-    const bundlerClient = getPimlicoBundlerClient();
-
-    // sendUserOperation handles everything:
-    // 1. Gets factory args from smart account (for deployment if needed)
-    // 2. Encodes calls into callData
-    // 3. Gets paymaster stub data (pm_getPaymasterStubData)
-    // 4. Estimates gas (eth_estimateUserOperationGas)
-    // 5. Gets real paymaster data (pm_getPaymasterData)
-    // 6. Signs with the smart account's signUserOperation (MetaMask wallet)
-    // 7. Sends to bundler (eth_sendUserOperation)
-    const userOpHash = await bundlerClient.sendUserOperation({
-      account: smartAccount,
-      calls: [{ to: smartAccount.address, value: 0n, data: '0x' }],
-      maxFeePerGas: 2_000_000_000n,
-      maxPriorityFeePerGas: 300_000_000n,
+    const { smartAccount, walletClient } = await getSmartAccount({
+      chainId,
+      accountType,
     });
+
+    const publicClient = createPublicClient({
+      chain: walletClient.chain,
+      transport: http(getRpcUrl(chainId)),
+    });
+
+    const initCode = (await (smartAccount as any).getInitCode?.()) ?? '0x';
+
+    const callData = await smartAccount.encodeCalls([
+      { to: smartAccount.address, value: 0n, data: '0x' },
+    ]);
+
+    const deployResult = await deployAndExecute(
+      smartAccount.address,
+      initCode,
+      callData,
+      chainId,
+    );
+
+    const { maxFeePerGas, maxPriorityFeePerGas } =
+      await publicClient.estimateFeesPerGas();
+
+    const userOp: Record<string, unknown> = {
+      sender: smartAccount.address,
+      nonce: BigInt(deployResult.nonce),
+      callData,
+      callGasLimit: BigInt(deployResult.callGasLimit),
+      verificationGasLimit: BigInt(deployResult.verificationGasLimit),
+      preVerificationGas: BigInt(deployResult.preVerificationGas),
+      maxFeePerGas: maxFeePerGas ?? 2_000_000_000n,
+      maxPriorityFeePerGas: maxPriorityFeePerGas ?? 300_000_000n,
+      paymaster: deployResult.paymaster,
+      paymasterData: deployResult.paymasterData,
+      paymasterVerificationGasLimit: BigInt(
+        deployResult.paymasterVerificationGasLimit,
+      ),
+      paymasterPostOpGasLimit: BigInt(
+        deployResult.paymasterPostOpGasLimit,
+      ),
+      signature: '0x',
+    };
+
+    if (initCode && initCode !== '0x') {
+      userOp.factory = initCode.slice(0, 42);
+      userOp.factoryData = `0x${initCode.slice(42)}`;
+    }
+
+    userOp.signature = await smartAccount.signUserOperation(userOp as any);
+
+    const { userOpHash } = await submitUserOp(userOp, chainId);
 
     await snap.request({
       method: 'snap_updateInterface',
@@ -73,14 +128,14 @@ export const handleDeploySmartAccount = async ({ id }: { id: string }) => {
       },
     });
 
-    const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
+    const receipt = await pollReceipt(userOpHash, 120000, chainId);
 
     const state = (await snap.request({
       method: 'snap_manageState',
       params: { operation: 'get' },
     })) as Record<string, unknown> | null;
 
-    const blockNumber = receipt.receipt.blockNumber;
+    const blockNumber = receipt.blockNumber;
 
     await snap.request({
       method: 'snap_manageState',
@@ -94,6 +149,8 @@ export const handleDeploySmartAccount = async ({ id }: { id: string }) => {
       },
     });
 
+    const txHash = receipt.transactionHash;
+
     await snap.request({
       method: 'snap_updateInterface',
       params: {
@@ -101,13 +158,21 @@ export const handleDeploySmartAccount = async ({ id }: { id: string }) => {
         ui: (
           <Box>
             <Heading>Smart Account Deployed</Heading>
-            <Text>Your smart account has been successfully deployed.</Text>
-            {receipt.receipt.transactionHash && (
+            <Text>
+              Your smart account has been successfully deployed on{' '}
+              {networkName}.
+            </Text>
+            {txHash ? (
               <Box>
                 <Divider />
-                <Copyable value={receipt.receipt.transactionHash} />
+                <Text>
+                  <Link href={getExplorerTxUrl(chainId, txHash)}>
+                    {shortenAddress(txHash, 8)}
+                  </Link>
+                </Text>
+                <Copyable value={txHash} />
               </Box>
-            )}
+            ) : null}
             <Divider />
             <Button name="nav:home" variant="primary">
               Back to Home

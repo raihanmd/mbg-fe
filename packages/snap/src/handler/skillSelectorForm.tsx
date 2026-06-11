@@ -1,4 +1,5 @@
 import { getSkillById } from "../api/skills";
+import { getNetworkName } from "../utils/format";
 import {
   Text,
   Bold,
@@ -109,7 +110,7 @@ const handleSkillSelectorFormSubmit = async ({
               </Row>
               <Row label="Network">
                 <Text>
-                  {chainId === 84532 ? "Base Sepolia" : `Chain ${chainId}`}
+                  {getNetworkName(chainId)}
                 </Text>
               </Row>
               <Row label="Smart Account">

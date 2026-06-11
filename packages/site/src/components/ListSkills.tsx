@@ -1,57 +1,44 @@
-
-
 const skills = [
   {
     name: "AI-Powered DCA",
-    badge: "AI market analysis",
+    badge: "x402 + Venice AI",
     description:
-      "Dollar-cost average USDC into WETH, enhanced with Venice AI market analysis before each swap.",
-    details: [
-      "Fetches crypto news via x402 OttoAI",
-      "Analyzes sentiment with Venice AI",
-      "Stores AI market context with each execution",
-    ],
+      "Fetches paid market context, asks Venice AI for execute/skip reasoning, then runs DCA only when allowed.",
+    chips: ["Cron", "x402", "Venice AI", "1Shot"],
+    featured: true,
   },
   {
     name: "Custom Cron DCA",
-    badge: "Custom schedule",
+    badge: "Deterministic",
     description:
-      "Dollar-cost average USDC into WETH on your custom cron schedule using any valid cron expression.",
-    details: [
-      "Configure cronSchedule directly",
-      "Example: 0 9 * * 1-5 for weekdays at 9 AM",
-      "Built for personalized recurring DCA plans",
-    ],
+      "Runs fixed DCA on a user-defined schedule without AI reasoning.",
+    chips: ["Cron", "No AI", "swap"],
+    featured: false,
   },
   {
     name: "USDC Inbound DCA",
-    badge: "Event trigger",
+    badge: "Event Trigger",
     description:
-      "Automatically swaps USDC when funds arrive in the smart account, with controls for fixed or percentage-based spending.",
-    details: [
-      "Triggered by inbound USDC transfers",
-      "Fixed amount or percent of inbound",
-      "Daily USDC spend limit",
-    ],
+      "Detects inbound USDC and converts a fixed or percentage amount within the user&apos;s spend limit.",
+    chips: ["Onchain event", "No AI", "transfer/swap"],
+    featured: false,
   },
 ];
 
-
-
 const ListSkills = () => {
   return (
-    <section id="skills" className="px-6 py-20 sm:px-10 lg:px-16">
-      <div className="mx-auto max-w-7xl">
+    <section id="skills" className="py-32">
+      <div className="mx-auto max-w-6xl px-6 sm:px-10 lg:px-16">
         <div className="max-w-3xl">
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-cyan-200">
-            AI Skills
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
+            Skills
           </p>
-          <h2 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl">
-            Pick a DCA worker for your plan.
+          <h2 className="mt-4 text-xl font-bold tracking-tight sm:text-2xl lg:text-3xl">
+            Skills for autonomous wallet workflows.
           </h2>
-          <p className="mt-5 text-lg leading-8 text-slate-300">
-            Each skill defines how the AI agent can spend USDC, when it can
-            execute, and which functions are allowed in the delegated scope.
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
+            Some skills are deterministic. Some add AI reasoning when it is
+            useful.
           </p>
         </div>
 
@@ -59,25 +46,33 @@ const ListSkills = () => {
           {skills.map((skill) => (
             <article
               key={skill.name}
-              className="group rounded-[2rem] border border-white/10 bg-white/[0.05] p-7 transition hover:-translate-y-1 hover:border-cyan-200/40 hover:bg-white/[0.08]"
+              className={
+                skill.featured
+                  ? "flex flex-col rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/5 to-card p-6 sm:p-8 transition hover:border-primary/40"
+                  : "flex flex-col rounded-2xl border border-border/50 bg-card p-6 sm:p-8 transition hover:border-primary/40"
+              }
             >
-              <span className="rounded-full bg-violet-400/15 px-3 py-1 text-sm font-bold text-violet-100">
+              <span className="inline-flex self-start rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary border border-primary/20">
                 {skill.badge}
               </span>
-              <h3 className="mt-6 text-2xl font-black">{skill.name}</h3>
-              <p className="mt-4 leading-7 text-slate-300">
+              <h3 className="mt-5 text-lg font-semibold text-foreground sm:text-xl">
+                {skill.name}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-slate-400">
                 {skill.description}
               </p>
-              <div className="mt-6 space-y-3">
-                {skill.details.map((detail) => (
-                  <div
-                    key={detail}
-                    className="flex gap-3 text-sm text-slate-200"
-                  >
-                    <span className="mt-1 h-2 w-2 rounded-full bg-cyan-300" />
-                    <span>{detail}</span>
-                  </div>
-                ))}
+
+              <div className="mt-auto pt-5">
+                <div className="flex flex-wrap gap-2">
+                  {skill.chips.map((chip) => (
+                    <span
+                      key={chip}
+                      className="rounded-md bg-muted/60 px-2.5 py-1 text-[11px] font-medium text-slate-400 font-mono"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
               </div>
             </article>
           ))}

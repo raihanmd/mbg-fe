@@ -8,7 +8,7 @@ import {
   PrepareInstallationResponse,
 } from '../types/PrepareInstallation';
 
-const API_URL = process.env.API_URL;
+const API_URL = 'http://localhost:4000';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -86,4 +86,61 @@ export const getInstallationExecutions = async (
   }
   const data = await response.json();
   return data as { data: InstallationExecution[] };
+};
+
+export const revokeInstallation = async (
+  id: string,
+  userAddress: string,
+): Promise<void> => {
+  const response = await globalThis.fetch(`${API_URL}/installations/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ userAddress }),
+  });
+  if (!response.ok) {
+    let errorMessage = `Request failed with status ${response.status}`;
+    try {
+      const errorBody = await response.json();
+      errorMessage = errorBody?.message ?? errorBody?.error ?? errorMessage;
+    } catch (ignored) {
+      void ignored;
+    }
+    throw new Error(errorMessage);
+  }
+};
+
+export const pauseInstallation = async (
+  id: string,
+  userAddress: string,
+): Promise<void> => {
+  const response = await globalThis.fetch(
+    `${API_URL}/installations/${id}/pause`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userAddress }),
+    },
+  );
+  await handleResponse(response);
+};
+
+export const resumeInstallation = async (
+  id: string,
+  userAddress: string,
+): Promise<void> => {
+  const response = await globalThis.fetch(
+    `${API_URL}/installations/${id}/resume`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userAddress }),
+    },
+  );
+  await handleResponse(response);
 };
