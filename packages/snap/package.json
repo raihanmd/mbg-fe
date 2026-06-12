@@ -14,7 +14,6 @@
     "snap.manifest.json"
   ],
   "scripts": {
-    "allow-scripts": "allow-scripts",
     "build": "mm-snap build",
     "build:clean": "yarn clean && yarn build",
     "clean": "rimraf dist",
