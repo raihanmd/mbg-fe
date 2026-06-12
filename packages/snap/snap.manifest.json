@@ -7,12 +7,12 @@
     "url": "git+https://github.com/GainJar-Payroll/skillwallet-snap.git"
   },
   "source": {
-    "shasum": "qlxerGiAzR8np+PhetqQ904Sxl5gP4eGDswY/bUoutY=",
+    "shasum": "9+EUyB2fswloOW1bNFv5b2zvYZz8lcso1v7BNNCRL7k=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
         "iconPath": "images/logo-only.svg",
-        "packageName": "skillwallet-snap",
+        "packageName": "@gainjar/skillwallet-snap",
         "registry": "https://registry.npmjs.org/"
       }
     }

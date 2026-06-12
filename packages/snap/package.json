@@ -1,5 +1,5 @@
 {
-  "name": "skillwallet-snap",
+  "name": "@gainjar/skillwallet-snap",
   "version": "0.1.1",
   "description": "SkillWallet — AI-powered automated on-chain skill execution.",
   "repository": {
